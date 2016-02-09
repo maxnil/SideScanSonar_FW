@@ -1,5 +1,5 @@
 /**
- * main routine for SonarCom_RsTOS
+ * main routine for SonarCom_RTOS
  */
 
 #include <asf.h>
@@ -201,19 +201,18 @@ void vAssertCalled(uint32_t ulLine, const char *pcFile)
 {
 	/* The following two variables are just to ensure the parameters are not
 	optimized away and therefore unavailable when viewed in the debugger. */
-	volatile uint32_t ulLineNumber = ulLine, ulSetNonZeroInDebuggerToReturn = 0;
+	volatile uint32_t ulLineNumber = ulLine, ulSetNonZeroInDebuggerToReturn = 1;
 	volatile const char * const pcFileName = pcFile;
 
 	taskENTER_CRITICAL();
 	printf("Assert: %d %s\n", (int)ulLineNumber, pcFileName);
-#if 0	
+
 	while( ulSetNonZeroInDebuggerToReturn == 0 )
 	{
 		/* If you want to set out of this function in the debugger to see the
 		assert() location then set ulSetNonZeroInDebuggerToReturn to a non-zero
 		value. */
 	}
-#endif
 	taskEXIT_CRITICAL();
 
 	( void ) pcFileName;
