@@ -3,38 +3,41 @@
  */
 
 #include <asf.h>
+#include "scom_init.h"
+
+/* Configuration */
 #include "conf_sonarcom.h"
 #include "conf_twi_master.h"
+
+/* Drivers */
 #include "led.h"
+#include "rtcc.h"
+
+/* FreeRTOS */
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
 #include "timers.h"
 
-#include "scom_init.h"
-#include "USB_CDC_CLI_task.h"
-
-#include "rtcc.h"
-
-/* Defines the LED toggled to provide visual feedback that the system is
- * running.  The rate is defined in milliseconds, then converted to RTOS ticks
- * by the portTICK_RATE_MS constant. */
-#define mainSOFTWARE_TIMER_LED			LED0_GPIO
-#define mainSOFTWARE_TIMER_RATE			(200 / portTICK_PERIOD_MS)
+#include "timer_task.h"
+#include "USB_CDC_tasks.h"
 
 /* The priorities at which various tasks will get created. */
-#define mainCDC_CLI_TASK_PRIORITY		(tskIDLE_PRIORITY + 1)
+#define CDC_CLI_TASK_PRIORITY		(tskIDLE_PRIORITY + 1)
+#define CDC_SONAR_TASK_PRIORITY		(tskIDLE_PRIORITY + 1)
 //#define mainUSART_ECHO_TASK_PRIORITY	(tskIDLE_PRIORITY)
-#define mainSPI_FLASH_TASK_PRIORITY		(tskIDLE_PRIORITY)
-#define mainTWI_EEPROM_TASK_PRIORITY	(tskIDLE_PRIORITY)
+//Max #define mainSPI_FLASH_TASK_PRIORITY		(tskIDLE_PRIORITY)
+//Max #define mainTWI_EEPROM_TASK_PRIORITY	(tskIDLE_PRIORITY)
 
 /* The stack sizes allocated to the various tasks. */
-#define mainUART_CLI_TASK_STACK_SIZE    (configMINIMAL_STACK_SIZE * 2)
-#define mainUSART_CLI_TASK_STACK_SIZE   (configMINIMAL_STACK_SIZE * 2)
-#define mainCDC_CLI_TASK_STACK_SIZE     (configMINIMAL_STACK_SIZE * 2)
-#define mainUSART_ECHO_TASK_STACK_SIZE  (configMINIMAL_STACK_SIZE)
-#define mainSPI_FLASH_TASK_STACK_SIZE   (configMINIMAL_STACK_SIZE * 2)
-#define mainTWI_EEPROM_TASK_STACK_SIZE  (configMINIMAL_STACK_SIZE * 2)
+//Max #define mainUART_CLI_TASK_STACK_SIZE    (configMINIMAL_STACK_SIZE * 2)
+//Max #define mainUSART_CLI_TASK_STACK_SIZE   (configMINIMAL_STACK_SIZE * 2)
+#define CDC_CLI_TASK_STACK_SIZE     (configMINIMAL_STACK_SIZE * 2)
+#define CDC_SONAR_TASK_STACK_SIZE   (configMINIMAL_STACK_SIZE * 2)
+//Max #define mainUSART_ECHO_TASK_STACK_SIZE  (configMINIMAL_STACK_SIZE)
+//Max #define mainSPI_FLASH_TASK_STACK_SIZE   (configMINIMAL_STACK_SIZE * 2)
+//Max #define mainTWI_EEPROM_TASK_STACK_SIZE  (configMINIMAL_STACK_SIZE * 2)
+#define SOFTWARE_TIMER_RATE			(200 / portTICK_PERIOD_MS)
 
 #define DBG_WELCOME_HEADER \
 "------------------------------------\r\n" \
@@ -45,16 +48,7 @@
 "------------------------------------\r\n"
 
 
-/*
- * The callback function used by the software timer.  See the comments at the
- * top of this file.
- */
-static void prvLEDTimerCallback(void *pvParameters);
-
-int main (void)
-{
-	TimerHandle_t xLEDTimer;
-
+int main (void) {
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Initialize PLL and clocks
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -96,26 +90,15 @@ int main (void)
 	rs485_init();						// Initialize RS485 USART
 #endif
 
-	// Print welcome message on Debug UART
+	/* Print welcome message on Debug UART */
 	printf(DBG_WELCOME_HEADER);
 
+	/* Create Timer task */
+	create_timer_task(SOFTWARE_TIMER_RATE);
 
-	/* Create the timer that toggles an LED to show that the system is running,
-	and that the other tasks are behaving as expected. */
-	xLEDTimer = xTimerCreate((const char * const) "LED timer",/* A text name, purely to help debugging. */
-							mainSOFTWARE_TIMER_RATE,	/* The timer period. */
-							pdTRUE,						/* This is an auto-reload timer, so xAutoReload is set to pdTRUE. */
-							NULL,						/* The timer does not use its ID, so the ID is just set to NULL. */
-							prvLEDTimerCallback			/* The function that is called each time the timer expires. */
-							);
-
-	/* Sanity check the timer's creation, then start the timer.  The timer
-	will not actually start until the FreeRTOS kernel is started. */
-	configASSERT(xLEDTimer);
-	xTimerStart(xLEDTimer, 0);
-
-	// Create USB CLI task
-	create_usb_cdc_cli_task(mainCDC_CLI_TASK_STACK_SIZE, mainCDC_CLI_TASK_PRIORITY);
+	/* Create USB CDC tasks */
+	create_usb_cdc_tasks(CDC_CLI_TASK_STACK_SIZE, CDC_CLI_TASK_PRIORITY,
+						 CDC_SONAR_TASK_STACK_SIZE, CDC_SONAR_TASK_PRIORITY);
 	
 	LED_On(LED2_GPIO);
 	printf("Starting all RTOS tasks\n");
@@ -220,44 +203,3 @@ void vAssertCalled(uint32_t ulLine, const char *pcFile)
 }
 /*-----------------------------------------------------------*/
 
-static void prvLEDTimerCallback(void *pvParameters)
-{
-#if 0
-	portBASE_TYPE xStatus = pdPASS;
-
-	/* Just to remove compiler warnings. */
-	(void) pvParameters;
-
-	/* Check other tasks. */
-	#if (defined confINCLUDE_USART_ECHO_TASKS)
-	{
-		if (are_usart_echo_tasks_still_running() != pdPASS) {
-			xStatus = pdFAIL;
-		}
-	}
-	#endif /* confINCLUDE_USART_ECHO_TASKS */
-
-	#if (defined confINCLUDE_SPI_FLASH_TASK)
-	{
-		if (did_spi_flash_test_pass() != pdPASS) {
-			xStatus = pdFAIL;
-		}
-	}
-	#endif /* confINCLUDE_SPI_FLASH_TASK */
-
-	#if (defined confINCLUDE_TWI_EEPROM_TASK)
-	{
-		if (did_twi_eeprom_test_pass() != pdPASS) {
-			xStatus = pdFAIL;
-		}
-	}
-	#endif /* configINCLUDE_TWI_EEPROM_TASK */
-
-	/* If an error has been detected, turn the error LED on. */
-	if (xStatus != pdPASS) {
-		vParTestSetLED(mainERROR_LED, pdTRUE);
-	}
-#endif
-	/* Toggle an LED to show the system is executing. */
-	LED_Toggle(mainSOFTWARE_TIMER_LED);
-}

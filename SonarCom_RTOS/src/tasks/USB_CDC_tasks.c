@@ -1,46 +1,5 @@
 /**
  *
- * \file
- *
- * \brief FreeRTOS+CLI task implementation example
- *
- *
- * Copyright (c) 2014-2015 Atmel Corporation. All rights reserved.
- *
- * \asf_license_start
- *
- * \page License
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *
- * 3. The name of Atmel may not be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * 4. This software may only be redistributed and used in connection with an
- *    Atmel microcontroller product.
- *
- * THIS SOFTWARE IS PROVIDED BY ATMEL "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
- * EXPRESSLY AND SPECIFICALLY DISCLAIMED. IN NO EVENT SHALL ATMEL BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- * \asf_license_stop
- *
  */
 
 /* Standard includes. */
@@ -60,7 +19,7 @@
 #include <udi_cdc.h>
 #include <udc.h>
 
-#include "USB_CDC_CLI_task.h"
+#include "USB_CDC_tasks.h"
 #include "CLI-commands.h"
 
 #include "sonar_data.h"
@@ -111,7 +70,7 @@ static SemaphoreHandle_t access_mutex = NULL;
 
 /*-----------------------------------------------------------*/
 
-void create_usb_cdc_cli_task(uint16_t stack_depth_words, unsigned portBASE_TYPE task_priority)
+void create_usb_cdc_tasks(uint16_t cli_stack_depth_words, unsigned portBASE_TYPE cli_task_priority, uint16_t sonar_stack_depth_words, unsigned portBASE_TYPE sonar_task_priority)
 {
 	/* Register the default CLI commands. */
 	vRegisterCLICommands();
@@ -130,20 +89,20 @@ void create_usb_cdc_cli_task(uint16_t stack_depth_words, unsigned portBASE_TYPE 
 	configASSERT(access_mutex);
 
 	/* Create the USART CLI task. */
-	xTaskCreate(	usb_cdc_command_console_task,		/* The task that implements the command console. */
-					(const int8_t *const) "CDC_CLI",	/* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
-					stack_depth_words,					/* The size of the stack allocated to the task. */
-					NULL,								/* The parameter is not used. */
-					task_priority,						/* The priority allocated to the task. */
-					NULL);								/* Used to store the handle to the created task - in this case the handle is not required. */
+	xTaskCreate(	usb_cdc_command_console_task,	/* The task that implements the command console. */
+					(const char *const) "CDC_CLI",	/* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
+					cli_stack_depth_words,			/* The size of the stack allocated to the task. */
+					NULL,							/* The parameter is not used. */
+					cli_task_priority,				/* The priority allocated to the task. */
+					NULL);							/* Used to store the handle to the created task - in this case the handle is not required. */
 
 	/* Create the USART CLI task. */
-	xTaskCreate(	usb_cdc_sonar_task,					/* The task that implements the sonar data handler. */
-					(const int8_t *const) "CDC_SONAR",	/* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
-					stack_depth_words,					/* The size of the stack allocated to the task. */
-					NULL,								/* The parameter is not used. */
-					task_priority,						/* The priority allocated to the task. */
-					NULL);								/* Used to store the handle to the created task - in this case the handle is not required. */
+	xTaskCreate(	usb_cdc_sonar_task,				/* The task that implements the sonar data handler. */
+					(const char *const) "CDC_DATA",	/* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
+					sonar_stack_depth_words,		/* The size of the stack allocated to the task. */
+					NULL,							/* The parameter is not used. */
+					sonar_task_priority,			/* The priority allocated to the task. */
+					NULL);							/* Used to store the handle to the created task - in this case the handle is not required. */
 }
 
 /*-----------------------------------------------------------*/

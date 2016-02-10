@@ -9,7 +9,7 @@
 #ifndef USB_CDC_CLI_TASK_H_
 #define USB_CDC_CLI_TASK_H_
 
-void create_usb_cdc_cli_task(uint16_t stack_depth_words, unsigned portBASE_TYPE task_priority);
+void create_usb_cdc_tasks(uint16_t cli_stack_depth_words, unsigned portBASE_TYPE cli_task_priority, uint16_t sonar_stack_depth_words, unsigned portBASE_TYPE sonar_task_priority);
 
 void cdc_cli_output(const uint8_t const *message_string);
 
