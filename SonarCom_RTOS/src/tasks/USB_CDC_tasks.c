@@ -110,8 +110,8 @@ void create_usb_cdc_tasks(uint16_t cli_stack_depth_words, unsigned portBASE_TYPE
 static void usb_cdc_command_console_task(void *pvParameters)
 {
 	uint8_t received_char, input_index = 0, *output_string;
-	static int8_t input_string[MAX_INPUT_SIZE],
-			last_input_string[MAX_INPUT_SIZE];
+	static int8_t input_string[MAX_INPUT_SIZE];
+//	static int8_t last_input_string[MAX_INPUT_SIZE];
 	portBASE_TYPE returned_value;
 
 	/* Just to remove compiler warnings. */
@@ -164,8 +164,8 @@ static void usb_cdc_command_console_task(void *pvParameters)
 					/* Get the string to write to the UART from the command
 					interpreter. */
 					returned_value = FreeRTOS_CLIProcessCommand(
-							input_string,
-							(int8_t *) output_string,
+							(char *)input_string,
+							(char *)output_string,
 							configCOMMAND_INT_MAX_OUTPUT_SIZE);
 
 					/* Transmit the generated string. */
@@ -219,7 +219,7 @@ static void usb_cdc_command_console_task(void *pvParameters)
 #define MAX_PING_PACKET_LENGTH 2100
 
 static void usb_cdc_sonar_task(void *pvParameters) {
-	uint8_t received_char;
+//	uint8_t received_char;
 	uint8_t* buffer;
 	int sonar_packet_length;
 

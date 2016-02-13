@@ -52,14 +52,13 @@
 #include "udc_desc.h"
 #include "udd.h"
 
+
 #if USB_DEVICE_VENDOR_ID == 0
-#warning USB_DEVICE_VENDOR_ID cannot be equal to 0
-//#   error USB_DEVICE_VENDOR_ID cannot be equal to 0
+#   error USB_DEVICE_VENDOR_ID cannot be equal to 0
 #endif
 
 #if USB_DEVICE_PRODUCT_ID == 0
-# warning USB_DEVICE_PRODUCT_ID cannot be equal to 0
-//#   error USB_DEVICE_PRODUCT_ID cannot be equal to 0
+#   error USB_DEVICE_PRODUCT_ID cannot be equal to 0
 #endif
 
 #ifdef __cplusplus

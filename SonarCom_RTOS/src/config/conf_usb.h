@@ -49,6 +49,7 @@
 
 #include "compiler.h"
 #include "FreeRTOS.h"
+#include <usb_atmel.h>
 
 /* Callback prototypes. */
 void cli_vbus_event(bool b_vbus_high);

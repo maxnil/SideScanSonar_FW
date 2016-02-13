@@ -99,6 +99,13 @@
 // From module: SAM4E startup code
 #include <exceptions.h>
 
+// From module: SPI - SAM Implementation
+#include <spi_master.h>
+#include <spi_master.h>
+
+// From module: SPI - Serial Peripheral Interface
+#include <spi.h>
+
 // From module: Sleep manager - SAM implementation
 #include <sam/sleepmgr.h>
 #include <sleepmgr.h>
@@ -131,10 +138,10 @@
 #include <usb_protocol_cdc.h>
 
 // From module: USB Device CDC (Single Interface Device)
-#include <udi_cdc.h>
+//Max #include <udi_cdc.h>
 
 // From module: USB Device Stack Core (Common API)
-#include <udc.h>
+//Max #include <udc.h>
 #include <udd.h>
 
 // From module: pio_handler support enabled

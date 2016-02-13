@@ -10,8 +10,6 @@
 
 /* FreeRTOS */
 #include "FreeRTOS.h"
-#include "task.h"
-#include "queue.h"
 #include "timers.h"
 
 #include "timer_task.h"
@@ -20,12 +18,11 @@ static TimerHandle_t xLEDTimer;
 
 
 /*
- * The callback function used by the software timer.  See the comments at the
- * top of this file.
+ * The callback function used by the software timer.
  */
 static void LEDTimerCallback(void *pvParameters) {
 	/* Toggle an LED to show the system is executing. */
-	LED_Toggle(mainSOFTWARE_TIMER_LED);
+	LED_Toggle(SOFTWARE_TIMER_LED);
 }
 
 void create_timer_task(const TickType_t xTimerPeriodInTicks) {
