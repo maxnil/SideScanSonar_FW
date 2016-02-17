@@ -47,25 +47,22 @@
 #ifndef CONF_USART_SERIAL_H
 #define CONF_USART_SERIAL_H
 
-/* A reference setting for UART */
-/** UART Interface */
-//#define CONF_UART            CONSOLE_UART
-/** Baudrate setting */
+/** Debug UART setting */
+#define CONF_UART				CONSOLE_UART
 #define CONSOLE_UART_BAUDRATE   115200
-/** Parity setting */
 #define CONSOLE_UART_PARITY     UART_MR_PAR_NO
 
+/** GPS UART setting */
+#define CONF_GPS_BAUDRATE		CONF_SCOM_GPS_USART_BAUDRATE
+#define CONF_GPS_ID_USART		ID_USART0
+#define CONF_GPS_USART			USART0
 
-/* A reference setting for USART */
-/** USART Interface */
-//#define CONF_UART              USART1
-/** Baudrate setting */
-//#define CONF_UART_BAUDRATE     115200
-/** Character length setting */
-//#define CONF_UART_CHAR_LENGTH  US_MR_CHRL_8_BIT
-/** Parity setting */
-//#define CONF_UART_PARITY       US_MR_PAR_NO
-/** Stop bits setting */
-//#define CONF_UART_STOP_BITS    US_MR_NBSTOP_1_BIT
+/** RS485 UART setting */
+#define CONF_RS485_BAUDRATE		CONF_SCOM_RS485_USART_BAUDRATE
+#define CONF_RS485_ID_USART		ID_USART1
+#define CONF_RS485_USART		USART1
+//#define RS485_USART_Handler		USART1_Handler
+//#define CONF_RS485_IRQn			USART1_IRQn
+//#define CONF_RS485_PDC			PDC_USART1
 
-#endif/* CONF_USART_SERIAL_H_INCLUDED */
+#endif /* CONF_USART_SERIAL_H_INCLUDED */

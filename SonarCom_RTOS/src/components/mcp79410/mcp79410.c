@@ -6,6 +6,8 @@
  */ 
 
 #include <asf.h>
+#include "FreeRTOS.h"
+#include "freertos_twi_master.h"
 #include "conf_twi_master.h"
 #include "mcp79410.h"
 
@@ -13,6 +15,7 @@
 // Write a data byte in the I2C RTCC
 //............................................................................................
 void mcp79410_wr_reg(uint8_t rtcc_reg, uint8_t data) {
+	status_code_t twi_status;
 	uint8_t buffer[1];
 
 	buffer[0] = data;
@@ -20,35 +23,48 @@ void mcp79410_wr_reg(uint8_t rtcc_reg, uint8_t data) {
 	twi_package_t packet = {
 		.addr[0]      = rtcc_reg,
 		.addr_length  = sizeof (uint8_t),		// TWI slave memory address data size
-		.chip         = MCP79410_RTCC_ADDR,			// TWI slave bus address
+		.chip         = MCP79410_RTCC_ADDR,		// TWI slave bus address
 		.buffer       = (void *)buffer,			// transfer data source buffer
 		.length       = 1						// transfer data size (bytes)
 	};
 	
-//	while (twi_master_write(CONF_TWI, &packet) != TWI_SUCCESS);
+#ifdef CONF_SCOM_ENABLE_FREERTOS_TWI
+	twi_status = freertos_twi_write_packet(CONF_TWI, &packet, 100 / portTICK_PERIOD_MS);
+	if (twi_status != STATUS_OK) {
+		printf("###ERROR: TWI write error %d\n", twi_status);
+	}
+#else
 	if (twi_master_write(CONF_TWI, &packet) != TWI_SUCCESS) {
 		printf("TWI write timeout\n");
 	}
+#endif
 }
 
 //..............................................................................................
 // Read a data byte from the I2C RTCC
 //..............................................................................................
 uint8_t mcp79410_rd_reg(uint8_t rtcc_reg) {
+	status_code_t twi_status;
 	uint8_t buffer[1];
 
 	twi_package_t packet = {
 		.addr[0]      = rtcc_reg,
 		.addr_length  = sizeof (uint8_t),		// TWI slave memory address data size
-		.chip         = MCP79410_RTCC_ADDR,			// TWI slave bus address
+		.chip         = MCP79410_RTCC_ADDR,		// TWI slave bus address
 		.buffer       = (void *)buffer,			// transfer data source buffer
 		.length       = 1						// transfer data size (bytes)
 	};
 	
-//	while (twi_master_read(CONF_TWI, &packet) != TWI_SUCCESS);
+#ifdef CONF_SCOM_ENABLE_FREERTOS_TWI
+	twi_status = freertos_twi_read_packet(CONF_TWI, &packet, 100 / portTICK_PERIOD_MS);
+	if (twi_status != STATUS_OK) {
+		printf("###ERROR: TWI read error %d\n", twi_status);
+	}
+#else
 	if (twi_master_read(CONF_TWI, &packet) != TWI_SUCCESS) {
 		printf("TWI read timeout\n");
 	}
+#endif
 
 	return buffer[0];
 }

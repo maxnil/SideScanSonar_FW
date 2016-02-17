@@ -56,7 +56,7 @@
 #endif
 
 /* Every bit in the interrupt mask. */
-#define MASK_ALL_INTERRUPTS     (0xffffffffUL)
+#define MASK_ALL_INTERRUPTS    (0xffffffffUL)
 /* TWI timeout counter */
 #define TWI_TIMEOUT_COUNTER    (0xffffffffUL)
 

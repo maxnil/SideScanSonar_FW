@@ -63,7 +63,7 @@
 #define IER_ERROR_INTERRUPTS        (US_IER_OVRE | US_IER_FRAME | US_IER_PARE)
 
 /* A value written to a member of an Rx buffer to show that the Rx side was not
-initialised and therefore should not be used. */
+initialized and therefore should not be used. */
 #define RX_NOT_USED                 (uint8_t *) 0x1
 
 /* Divide by this number to convert bits per second to bits per 5 milliseconds.
@@ -274,7 +274,7 @@ freertos_usart_if freertos_usart_serial_init(Usart *p_usart,
 
 		/* Is the driver also going to receive? */
 		if (freertos_driver_parameters->receive_buffer != NULL) {
-			/* rx_event_semaphore is used to signal the arival of new data.  It
+			/* rx_event_semaphore is used to signal the arrival of new data.  It
 			must be a counting semaphore for the following reason:  If the Rx
 			DMA places data at the end of its circular buffer it will give the
 			semaphore to indicate the presence of unread data.  If it then
