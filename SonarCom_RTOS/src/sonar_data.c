@@ -5,6 +5,9 @@
  *  Author: Max
  */ 
 
+/* Standard includes. */
+#include <stdint.h>
+#include <string.h>
 #include <math.h>
 
 #include "compiler.h"
@@ -66,13 +69,21 @@ int left_samples[500] =
 
 int ping_nr = 0;
 
+static const uint8_t *const ping_header = (uint8_t*)"$PING:2014,2500,5.00,500,";
+
 /* Create a Sonar Packet */
 int create_ping_packet(uint8_t* buffer, int len) {
-//	$PING,413,50,5.00,100,
-	int i = 0;
+	int i;
 	int j;
 	uint16_t left_data;
 	uint16_t right_data;
+	int ping_header_len;
+	
+	ping_header_len = strlen((char *)ping_header);
+	memcpy(buffer, ping_header, ping_header_len);
+	i = ping_header_len;
+	
+#if 0	
 	buffer[i++] = '$';
 	buffer[i++] = 'P';
 	buffer[i++] = 'I';
@@ -98,7 +109,7 @@ int create_ping_packet(uint8_t* buffer, int len) {
 	buffer[i++] = '0';
 	buffer[i++] = '0';
 	buffer[i++] = ',';
-
+#endif
 	left_data = (uint16_t)left_samples[0];
 	buffer[i++] = left_data & 0xFF;
 	buffer[i++] = (left_data>>8) & 0xFF;

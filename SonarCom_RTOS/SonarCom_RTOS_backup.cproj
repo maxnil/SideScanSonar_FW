@@ -342,11 +342,6 @@
       <Value>../src/ASF/common/services/clock</Value>
       <Value>../src/ASF/common/services/delay</Value>
       <Value>../src/ASF/common/services/ioport</Value>
-      <Value>../src/services</Value>
-      <Value>../src/ASF/thirdparty/FreeRTOS-8.2.1/source</Value>
-      <Value>../src/ASF/thirdparty/FreeRTOS-8.2.1/source/include</Value>
-      <Value>../src/ASF/thirdparty/FreeRTOS-8.2.1/source/portable/GCC/ARM-CM4F</Value>
-      <Value>../src/ASF/thirdparty/FreeRTOS-8.2.1/source/portable/MemMang</Value>
       <Value>../src/ASF/sam/drivers/uart</Value>
       <Value>../src/ASF/common/services/serial/sam_uart</Value>
       <Value>../src/ASF/common/services/serial</Value>
@@ -355,6 +350,8 @@
       <Value>../src/ASF/sam/drivers/pdc</Value>
       <Value>../src/ASF/sam/drivers/pdc/pdc_uart_example</Value>
       <Value>../src/ASF/common/services/freertos/sam</Value>
+      <Value>../src/ASF/thirdparty/freertos/freertos-7.3.0/source/include</Value>
+      <Value>../src/ASF/thirdparty/freertos/freertos-7.3.0/source/portable/gcc/sam</Value>
       <Value>../src/ASF/sam/drivers/rtc</Value>
       <Value>../src/ASF/sam/drivers/matrix</Value>
       <Value>../src/ASF/sam/drivers/pio</Value>
@@ -373,7 +370,7 @@
       <Value>../src/ASF/common/components/display/ssd1306</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
-  <armgcc.compiler.optimization.level>Optimize most (-O3)</armgcc.compiler.optimization.level>
+  <armgcc.compiler.optimization.level>Optimize for size (-Os)</armgcc.compiler.optimization.level>
   <armgcc.compiler.optimization.OtherFlags>-fdata-sections</armgcc.compiler.optimization.OtherFlags>
   <armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>True</armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>
   <armgcc.compiler.warnings.AllWarnings>True</armgcc.compiler.warnings.AllWarnings>
@@ -398,7 +395,6 @@
   <armgcc.preprocessingassembler.general.IncludePaths>
     <ListValues>
       <Value>../common/applications/user_application/user_board/config</Value>
-      <Value>../src/tasks</Value>
       <Value>../src/config</Value>
       <Value>../src/ASF/thirdparty/CMSIS/Lib/GCC</Value>
       <Value>../src/ASF/common/utils</Value>
@@ -416,11 +412,6 @@
       <Value>../src/ASF/common/services/clock</Value>
       <Value>../src/ASF/common/services/delay</Value>
       <Value>../src/ASF/common/services/ioport</Value>
-      <Value>../src/services</Value>
-      <Value>../src/ASF/thirdparty/FreeRTOS-8.2.1/source</Value>
-      <Value>../src/ASF/thirdparty/FreeRTOS-8.2.1/source/include</Value>
-      <Value>../src/ASF/thirdparty/FreeRTOS-8.2.1/source/portable/GCC/ARM-CM4F</Value>
-      <Value>../src/ASF/thirdparty/FreeRTOS-8.2.1/source/portable/MemMang</Value>
       <Value>../src/ASF/sam/drivers/uart</Value>
       <Value>../src/ASF/common/services/serial/sam_uart</Value>
       <Value>../src/ASF/common/services/serial</Value>
@@ -429,6 +420,8 @@
       <Value>../src/ASF/sam/drivers/pdc</Value>
       <Value>../src/ASF/sam/drivers/pdc/pdc_uart_example</Value>
       <Value>../src/ASF/common/services/freertos/sam</Value>
+      <Value>../src/ASF/thirdparty/freertos/freertos-7.3.0/source/include</Value>
+      <Value>../src/ASF/thirdparty/freertos/freertos-7.3.0/source/portable/gcc/sam</Value>
       <Value>../src/ASF/sam/drivers/rtc</Value>
       <Value>../src/ASF/sam/drivers/matrix</Value>
       <Value>../src/ASF/sam/drivers/pio</Value>
@@ -688,12 +681,6 @@
     <None Include="src\ASF\common\boards\board.h">
       <SubType>compile</SubType>
     </None>
-    <Compile Include="src\application_hooks.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\application_hooks.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="src\ASF\common\boards\user_board\init.c">
       <SubType>compile</SubType>
     </Compile>
@@ -1055,9 +1042,6 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\components\ssd1322\ssd1322.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\packets.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\scom.h">

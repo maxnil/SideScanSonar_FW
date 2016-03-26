@@ -20,17 +20,19 @@
 #include <udc.h>
 
 #include "USB_CDC_tasks.h"
+#include "task_queues.h"
 #include "CLI-commands.h"
+#include "packets.h"
 
 #include "sonar_data.h"
-
+#include "scom.h"
 
 #define CLI_USB_PORT 0
 #define SONAR_USB_PORT 1
 
 /* Semaphore used to signal the arrival of new data. */
 static SemaphoreHandle_t cdc_new_cli_data_semaphore = NULL;
-static SemaphoreHandle_t cdc_new_sonar_data_semaphore = NULL;
+static SemaphoreHandle_t cdc_new_data_channel_semaphore = NULL;
 
 /* Flag used to indicated whether or not the CDC port is connected or not. */
 static volatile bool cdc_connected = false;
@@ -56,7 +58,7 @@ static void usb_cdc_command_console_task(void *pvParameters);
 /*
  * The task that implements the Sonar data processing.
  */
-static void usb_cdc_sonar_task(void *pvParameters);
+static void usb_cdc_data_channel_task(void *pvParameters);
 
 /*-----------------------------------------------------------*/
 
@@ -68,10 +70,11 @@ static void usb_cdc_sonar_task(void *pvParameters);
 /* Mutex used to get access to the CDC port for transmitting. */
 static SemaphoreHandle_t access_mutex = NULL;
 
-/*-----------------------------------------------------------*/
 
-void create_usb_cdc_tasks(uint16_t cli_stack_depth_words, unsigned portBASE_TYPE cli_task_priority, uint16_t sonar_stack_depth_words, unsigned portBASE_TYPE sonar_task_priority)
-{
+/**
+ * USB CDC Task creator
+ */
+void create_usb_cdc_tasks(void) {
 	/* Register the default CLI commands. */
 	vRegisterCLICommands();
 
@@ -80,33 +83,43 @@ void create_usb_cdc_tasks(uint16_t cli_stack_depth_words, unsigned portBASE_TYPE
 	configASSERT(cdc_new_cli_data_semaphore);
 	
 	/* Create the semaphore used to signal the arrival of new data on RAW USB port */
-	vSemaphoreCreateBinary(cdc_new_sonar_data_semaphore);
-	configASSERT(cdc_new_sonar_data_semaphore);
+	vSemaphoreCreateBinary(cdc_new_data_channel_semaphore);
+	configASSERT(cdc_new_data_channel_semaphore);
 
 	/* Create the semaphore used to access the CDC port as it is written to from
 	more than one task. */
 	access_mutex = xSemaphoreCreateMutex();
 	configASSERT(access_mutex);
+	
+	/* Start USB */
+	if (!udc_include_vbus_monitoring()) {
+		/* VBUS monitoring is not available on this product.  Assume VBUS is present. */
+		cli_vbus_event(true);
+	}
+
+	udc_start();
 
 	/* Create the USART CLI task. */
 	xTaskCreate(	usb_cdc_command_console_task,	/* The task that implements the command console. */
 					(const char *const) "CDC_CLI",	/* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
-					cli_stack_depth_words,			/* The size of the stack allocated to the task. */
+					CDC_CLI_TASK_STACK_SIZE,		/* The size of the stack allocated to the task. */
 					NULL,							/* The parameter is not used. */
-					cli_task_priority,				/* The priority allocated to the task. */
+					CDC_CLI_TASK_PRIORITY,			/* The priority allocated to the task. */
 					NULL);							/* Used to store the handle to the created task - in this case the handle is not required. */
 
 	/* Create the USART CLI task. */
-	xTaskCreate(	usb_cdc_sonar_task,				/* The task that implements the sonar data handler. */
+	xTaskCreate(	usb_cdc_data_channel_task,		/* The task that implements the sonar data handler. */
 					(const char *const) "CDC_DATA",	/* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
-					sonar_stack_depth_words,		/* The size of the stack allocated to the task. */
+					CDC_DATA_CHANNEL_TASK_STACK_SIZE,/* The size of the stack allocated to the task. */
 					NULL,							/* The parameter is not used. */
-					sonar_task_priority,			/* The priority allocated to the task. */
+					CDC_DATA_CHANNEL_TASK_PRIORITY,	/* The priority allocated to the task. */
 					NULL);							/* Used to store the handle to the created task - in this case the handle is not required. */
 }
 
-/*-----------------------------------------------------------*/
 
+/**
+ * USB CDC Command Console Task
+ */
 static void usb_cdc_command_console_task(void *pvParameters)
 {
 	uint8_t received_char, input_index = 0, *output_string;
@@ -215,57 +228,34 @@ static void usb_cdc_command_console_task(void *pvParameters)
 	}
 }
 
-/*-----------------------------------------------------------*/
-#define MAX_PING_PACKET_LENGTH 2100
 
-static void usb_cdc_sonar_task(void *pvParameters) {
-//	uint8_t received_char;
-	uint8_t* buffer;
-	int sonar_packet_length;
+/**
+ * USB CDC Data Channel task
+ */
+static void usb_cdc_data_channel_task(void *pvParameters) {
+	uint8_t *packet_ptr;
+	int packet_len;
 
 	/* Just to remove compiler warnings. */
 	(void) pvParameters;
 
-	buffer = malloc(MAX_PING_PACKET_LENGTH);
-	if (buffer == NULL) {
-		printf("###ERROR: malloc() failed\n");
-	}
-
-	udc_start();
-
-	if (udc_include_vbus_monitoring() == false) {
-		/* VBUS monitoring is not available on this product.  Assume VBUS is
-		present. */
-		cli_vbus_event(true);
-	}
-
-	// Loop forever
+	/* Loop forever */
 	for (;;) {
 		/* Wait for new data. */
-#if 0
-		xSemaphoreTake(cdc_new_sonar_data_semaphore, portMAX_DELAY);
+		if (xQueueReceive(data_channel_queue, &packet_ptr, (TickType_t) 1000 )) {
+//			printf("Data_packet packet_ptr = %p\n", packet_ptr);
+			printf("Data_packet received: %s", packet_ptr + PACKET_HEADER_SIZE);
+			/* Get packet length */
+			packet_len = ((struct packet_header_t*)packet_ptr)->length;
 
-		/* Ensure mutually exclusive access is obtained */
-//		xSemaphoreTake(access_mutex, portMAX_DELAY);
+			/* Get hold of the USB port, then send packet */
+			xSemaphoreTake(access_mutex, portMAX_DELAY);
+			udi_cdc_multi_write_buf(SONAR_USB_PORT, packet_ptr, packet_len);
+			xSemaphoreGive(access_mutex);
 
-		/* While there are input characters. */
-		while (udi_cdc_multi_is_rx_ready(SONAR_USB_PORT) == true) {
-			received_char = (uint8_t) udi_cdc_multi_getc(SONAR_USB_PORT);
-
-			/* Echo the character. */
-			udi_cdc_multi_putc(SONAR_USB_PORT, received_char);
-	
-			udi_cdc_multi_write_buf(SONAR_USB_PORT, "Kalle Kula  " , 12);
+			/* Release buffer */
+			vPortFree(packet_ptr);
 		}
-#endif
-		sonar_packet_length = create_ping_packet(buffer, MAX_PING_PACKET_LENGTH);
-		udi_cdc_multi_write_buf(SONAR_USB_PORT, buffer, sonar_packet_length);
-		
-		vTaskDelay(200);
-
-		/* Finished with the CDC port, return the mutex until more characters
-		arrive. */
-//		xSemaphoreGive(access_mutex);
 	}
 }
 
@@ -321,8 +311,8 @@ void cli_cdc_rx_notify(uint8_t port)
 		configASSERT(cdc_new_cli_data_semaphore);
 		xSemaphoreGiveFromISR(cdc_new_cli_data_semaphore, &xHigherPriorityTaskWoken);
 	} else {
-		configASSERT(cdc_new_sonar_data_semaphore);
-		xSemaphoreGiveFromISR(cdc_new_sonar_data_semaphore, &xHigherPriorityTaskWoken);		
+		configASSERT(cdc_new_data_channel_semaphore);
+		xSemaphoreGiveFromISR(cdc_new_data_channel_semaphore, &xHigherPriorityTaskWoken);		
 	}
 
 	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);

@@ -9,7 +9,18 @@
 #ifndef USB_CDC_CLI_TASK_H_
 #define USB_CDC_CLI_TASK_H_
 
-void create_usb_cdc_tasks(uint16_t cli_stack_depth_words, unsigned portBASE_TYPE cli_task_priority, uint16_t sonar_stack_depth_words, unsigned portBASE_TYPE sonar_task_priority);
+#include "task.h"
+
+/* Task priorities */
+#define CDC_CLI_TASK_PRIORITY				(tskIDLE_PRIORITY + 1)
+#define CDC_DATA_CHANNEL_TASK_PRIORITY		(tskIDLE_PRIORITY + 1)
+
+/* Task stack sizes */
+#define CDC_CLI_TASK_STACK_SIZE				(configMINIMAL_STACK_SIZE * 2)
+#define CDC_DATA_CHANNEL_TASK_STACK_SIZE	(configMINIMAL_STACK_SIZE * 4)
+
+/* USB CDC Task creator */
+void create_usb_cdc_tasks(void);
 
 void cdc_cli_output(const uint8_t const *message_string);
 

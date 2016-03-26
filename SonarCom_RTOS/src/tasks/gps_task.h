@@ -9,8 +9,17 @@
 #ifndef GPS_TASK_H_
 #define GPS_TASK_H_
 
-#define GPS_RX_BUFFER_SIZE 64
+#include "task.h"
 
-void create_gps_task(uint16_t stack_depth_words, unsigned portBASE_TYPE task_priority);
+/* Task priorities */
+#define GPS_TASK_PRIORITY		(tskIDLE_PRIORITY + 1)
+
+/* Task stack sizes */
+#define GPS_TASK_STACK_SIZE		(configMINIMAL_STACK_SIZE * 3)
+
+#define GPS_MAX_SENTENCE_LENGTH 100
+
+/* GPS Task creator */
+void create_gps_task(void);
 
 #endif /* GPS_TASK_H_ */

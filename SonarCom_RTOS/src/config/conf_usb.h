@@ -71,8 +71,7 @@ interrupt priority is at or below configMAX_SYSCALL_INTERRUPT_PRIORITY. */
 #define  USB_DEVICE_MAJOR_VERSION         1
 #define  USB_DEVICE_MINOR_VERSION         0
 #define  USB_DEVICE_POWER                 100 // Consumption on Vbus line (mA)
-#define  USB_DEVICE_ATTR                  \
-	(USB_CONFIG_ATTR_SELF_POWERED)
+#define  USB_DEVICE_ATTR                  USB_CONFIG_ATTR_SELF_POWERED
 // (USB_CONFIG_ATTR_BUS_POWERED)
 // (USB_CONFIG_ATTR_REMOTE_WAKEUP|USB_CONFIG_ATTR_SELF_POWERED)
 // (USB_CONFIG_ATTR_REMOTE_WAKEUP|USB_CONFIG_ATTR_BUS_POWERED)
@@ -80,7 +79,7 @@ interrupt priority is at or below configMAX_SYSCALL_INTERRUPT_PRIORITY. */
 //! USB Device string definitions (Optional)
 #define  USB_DEVICE_MANUFACTURE_NAME      "DML"
 #define  USB_DEVICE_PRODUCT_NAME          "SonarCom"
-// #define  USB_DEVICE_SERIAL_NAME           "12...EF"
+#define  USB_DEVICE_SERIAL_NAME           "XX"
 
 
 /**
