@@ -9,6 +9,8 @@
 #ifndef SONAR_DATA_H_
 #define SONAR_DATA_H_
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFINES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 #define MAX_SONAR_SAMPLES 2000
 
 struct sonar_data_t {

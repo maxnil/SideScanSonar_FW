@@ -17,11 +17,6 @@
 /* Task stack sizes */
 #define RS485_TASK_STACK_SIZE	(configMINIMAL_STACK_SIZE * 4)
 
-#define RS485_NR_SYNCBYTES 4
-#define RS485_NR_ENDBYTES 2
-#define RS485_SYNCBYTE 0xAF
-#define RS485_ENDBYTE 0x0A
-
 #define RS485_RX_BUFFER_SIZE	2048
 
 /* RS485 Task creator */

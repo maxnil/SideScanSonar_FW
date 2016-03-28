@@ -1,6 +1,11 @@
-/**
+/*
+ * USB_CDC_tasks.c
  *
- */
+ * Created: 2016-02-14 15:37:32
+ *  Author: Max
+ */ 
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INCLUDES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /* Standard includes. */
 #include <stdint.h>
@@ -24,55 +29,38 @@
 #include "CLI-commands.h"
 #include "packets.h"
 
-#include "sonar_data.h"
-#include "scom.h"
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFINES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+/* USB CDC ports */
 #define CLI_USB_PORT 0
 #define SONAR_USB_PORT 1
 
-/* Semaphore used to signal the arrival of new data. */
+/* Dimensions the buffer into which input characters are placed */
+#define MAX_CLI_INPUT_SIZE 40
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ LOCAL VARIABLES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/* Semaphore used to signal the arrival of new data */
 static SemaphoreHandle_t cdc_new_cli_data_semaphore = NULL;
 static SemaphoreHandle_t cdc_new_data_channel_semaphore = NULL;
 
-/* Flag used to indicated whether or not the CDC port is connected or not. */
-static volatile bool cdc_connected = false;
-
-/* Dimensions the buffer into which input characters are placed. */
-#define MAX_INPUT_SIZE                  40
-
-/* The size of the buffer provided to the USART driver for storage of received
- * bytes. */
-#define RX_BUFFER_SIZE_BYTES            (50)
-
-/* The maximum number of events the queue used to pass CDC events to the CLI
- * task can hold at any one time. */
-#define EVENT_QUEUE_LENGTH              (5)
-
-/*-----------------------------------------------------------*/
-
-/*
- * The task that implements the command console processing.
- */
-static void usb_cdc_command_console_task(void *pvParameters);
-
-/*
- * The task that implements the Sonar data processing.
- */
-static void usb_cdc_data_channel_task(void *pvParameters);
-
-/*-----------------------------------------------------------*/
-
-
-/* Const strings used by the CLI interface. */
-// static const uint8_t *const new_line = (uint8_t *) "\r\n";
-// static const uint8_t *const line_separator = (uint8_t *) "\r\n[Press ENTER to execute the previous command again]\r\n>";
-
-/* Mutex used to get access to the CDC port for transmitting. */
+/* Mutex used to get access to the CDC port for transmitting */
 static SemaphoreHandle_t access_mutex = NULL;
 
+/* Flag used to indicated whether or not the CDC port is connected or not */
+static volatile bool cdc_connected = false;
 
-/**
+//~~~~~~~~~~~~~~~~~~~~~~~~ LOCAL FUNCTION DECLARATIONS ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+static void usb_cdc_command_console_task(void *pvParameters);
+static void usb_cdc_data_channel_task(void *pvParameters);
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+/*******************************************************************************
  * USB CDC Task creator
+ * Creates both the CLI and Data Channel USB Task
  */
 void create_usb_cdc_tasks(void) {
 	/* Register the default CLI commands. */
@@ -94,9 +82,10 @@ void create_usb_cdc_tasks(void) {
 	/* Start USB */
 	if (!udc_include_vbus_monitoring()) {
 		/* VBUS monitoring is not available on this product.  Assume VBUS is present. */
-		cli_vbus_event(true);
+		usb_vbus_event(true);
 	}
 
+	/* Start USB */
 	udc_start();
 
 	/* Create the USART CLI task. */
@@ -117,26 +106,17 @@ void create_usb_cdc_tasks(void) {
 }
 
 
-/**
+/*******************************************************************************
  * USB CDC Command Console Task
+ * Reads characters from USB CLI Port and processes the commands
  */
-static void usb_cdc_command_console_task(void *pvParameters)
-{
+static void usb_cdc_command_console_task(void *pvParameters) {
 	uint8_t received_char, input_index = 0, *output_string;
-	static int8_t input_string[MAX_INPUT_SIZE];
-//	static int8_t last_input_string[MAX_INPUT_SIZE];
+	static int8_t input_string[MAX_CLI_INPUT_SIZE];
 	portBASE_TYPE returned_value;
 
 	/* Just to remove compiler warnings. */
 	(void) pvParameters;
-
-	udc_start();
-
-	if (udc_include_vbus_monitoring() == false) {
-		/* VBUS monitoring is not available on this product.  Assume VBUS is
-		present. */
-		cli_vbus_event(true);
-	}
 
 	/* Obtain the address of the output buffer.  Note there is no mutual
 	exclusion on this buffer as it is assumed only one command console
@@ -159,46 +139,27 @@ static void usb_cdc_command_console_task(void *pvParameters)
 			udi_cdc_multi_putc(CLI_USB_PORT, received_char);
 
 			if (received_char == '\r') {
-				/* Transmit a line separator, just to make the output easier to
-				read. */
-//				udi_cdc_multi_write_buf(CLI_USB_PORT, (void *) new_line, strlen((char *) new_line));
-
-				/* See if the command is empty, indicating that the last command
-				is to be executed again. */
-//				if (input_index == 0) {
-//					strcpy((char *) input_string, (char *) last_input_string);
-//				}
-
 				/* Pass the received command to the command interpreter.  The
 				command interpreter is called repeatedly until it returns pdFALSE as
 				it might generate more than one string. */
-		if (input_index > 0) {
-				do {
-					/* Get the string to write to the UART from the command
-					interpreter. */
-					returned_value = FreeRTOS_CLIProcessCommand(
-							(char *)input_string,
-							(char *)output_string,
-							configCOMMAND_INT_MAX_OUTPUT_SIZE);
+				if (input_index > 0) {
+					do {
+						/* Get the string to write to the UART from the command
+						interpreter. */
+						returned_value = FreeRTOS_CLIProcessCommand(
+								(char *)input_string,
+								(char *)output_string,
+								configCOMMAND_INT_MAX_OUTPUT_SIZE);
 
-					/* Transmit the generated string. */
-					udi_cdc_multi_write_buf(CLI_USB_PORT, (void *) output_string, strlen(
-							(char *) output_string));
-				} while (returned_value != pdFALSE);
+						/* Transmit the generated string. */
+						udi_cdc_multi_write_buf(CLI_USB_PORT, (void *) output_string, strlen(
+								(char *) output_string));
+					} while (returned_value != pdFALSE);
 				}
 				/* All the strings generated by the input command have been sent.
-				Clear the input	string ready to receive the next command.
-				Remember the command that was just processed first in case it is
-				to be processed again. */
-//				strcpy((char *) last_input_string,
-//						(char *) input_string);
+				Clear the input	string ready to receive the next command. */
 				input_index = 0;
-				memset(input_string, 0x00, MAX_INPUT_SIZE);
-
-				/* Start to transmit a line separator, just to make the output
-				easier to read. */
-//				udi_cdc_multi_write_buf(CLI_USB_PORT, (void *) line_separator, strlen(
-//						(char *) line_separator));
+				memset(input_string, 0x00, MAX_CLI_INPUT_SIZE);
 			} else {
 				if (received_char == '\n') {
 					/* Ignore the character. */
@@ -207,14 +168,13 @@ static void usb_cdc_command_console_task(void *pvParameters)
 					string - if any. */
 					if (input_index > 0) {
 						input_index--;
-						input_string[input_index]
-							= '\0';
+						input_string[input_index] = '\0';
 					}
 				} else {
 					/* A character was entered.  Add it to the string
-					entered so far.  When a \n is entered the complete
+					entered so far.  When a \r is entered the complete
 					string will be passed to the command interpreter. */
-					if (input_index < MAX_INPUT_SIZE) {
+					if (input_index < MAX_CLI_INPUT_SIZE) {
 						input_string[input_index] = received_char;
 						input_index++;
 					}
@@ -222,15 +182,15 @@ static void usb_cdc_command_console_task(void *pvParameters)
 			}
 		}
 
-		/* Finished with the CDC port, return the mutex until more characters
-		arrive. */
+		/* Finished with the CDC port, return the mutex until more characters arrive. */
 		xSemaphoreGive(access_mutex);
 	}
 }
 
 
-/**
+/*******************************************************************************
  * USB CDC Data Channel task
+ * Sends all data that is in the 'data_channel_queue' to the USB Data Channel
  */
 static void usb_cdc_data_channel_task(void *pvParameters) {
 	uint8_t *packet_ptr;
@@ -242,9 +202,8 @@ static void usb_cdc_data_channel_task(void *pvParameters) {
 	/* Loop forever */
 	for (;;) {
 		/* Wait for new data. */
-		if (xQueueReceive(data_channel_queue, &packet_ptr, (TickType_t) 1000 )) {
-//			printf("Data_packet packet_ptr = %p\n", packet_ptr);
-			printf("Data_packet received: %s", packet_ptr + PACKET_HEADER_SIZE);
+		if (xQueueReceive(data_channel_queue, &packet_ptr, portMAX_DELAY) == pdPASS) {
+//			printf("Data_packet received: %s", &((struct packet_header_t*)packet_ptr)->data);
 			/* Get packet length */
 			packet_len = ((struct packet_header_t*)packet_ptr)->length;
 
@@ -259,27 +218,26 @@ static void usb_cdc_data_channel_task(void *pvParameters) {
 	}
 }
 
-/*-----------------------------------------------------------*/
 
-void cdc_cli_output(const uint8_t const *message_string)
-{
+/*******************************************************************************
+ * USB CDC CLI string output
+ * Sends 'message_string' to the CLI output interface
+ */
+void cdc_cli_output(const uint8_t *message_string) {
 	if (cdc_connected == true) {
 		/* This call is outside of the CLI task, so ensure mutually exclusive
 		access is obtained. */
 		xSemaphoreTake(access_mutex, portMAX_DELAY);
-
 		udi_cdc_multi_write_buf(CLI_USB_PORT, (void *) message_string, strlen((char *) message_string));
-
-		/* Finished writing to the CDC. */
 		xSemaphoreGive(access_mutex);
 	}
 }
 
-/*-----------------------------------------------------------*/
 
-
-void cli_vbus_event(bool b_vbus_high)
-{
+/*******************************************************************************
+ * USB VBUS Event
+ */
+void usb_vbus_event(bool b_vbus_high) {
 	if (b_vbus_high == true) {
 		printf("VBUS is high\n");
 		udc_attach();
@@ -289,39 +247,42 @@ void cli_vbus_event(bool b_vbus_high)
 	}
 }
 
-/*-----------------------------------------------------------*/
 
-bool cli_cdc_enable(uint8_t port)
-{
-	(void) port;
-
-	cdc_connected = true;
-	return true;
-}
-
-/*-----------------------------------------------------------*/
-
-void cli_cdc_rx_notify(uint8_t port)
-{
+/*******************************************************************************
+ * USB CDC Received Notify
+ * Signals whenever there is new data received on any of the two USB interfaces
+ */
+void usb_cdc_rx_notify(uint8_t port) {
 	portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
 
+	/* Check which USB port that received data */
 	if (port == CLI_USB_PORT) {
-		/* Sanity check the event semaphore before giving it to indicate to the
-		 * task that data is available. */
-		configASSERT(cdc_new_cli_data_semaphore);
+//Max		configASSERT(cdc_new_cli_data_semaphore);
 		xSemaphoreGiveFromISR(cdc_new_cli_data_semaphore, &xHigherPriorityTaskWoken);
 	} else {
-		configASSERT(cdc_new_data_channel_semaphore);
+//Max		configASSERT(cdc_new_data_channel_semaphore);
 		xSemaphoreGiveFromISR(cdc_new_data_channel_semaphore, &xHigherPriorityTaskWoken);		
 	}
 
 	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
 }
 
-/*-----------------------------------------------------------*/
 
-void cli_cdc_disable(uint8_t port)
-{
+/*******************************************************************************
+ * USB CDC Enable
+ */
+bool usb_cdc_enable(uint8_t port) {
+	(void) port;
+
+	cdc_connected = true;
+	return true;
+}
+
+
+/*******************************************************************************
+ * USB CDC Disable
+ */
+void usb_cdc_disable(uint8_t port) {
 	(void) port;
 
 	cdc_connected = false;

@@ -52,10 +52,10 @@
 #include <usb_atmel.h>
 
 /* Callback prototypes. */
-void cli_vbus_event(bool b_vbus_high);
-bool cli_cdc_enable(uint8_t port);
-void cli_cdc_disable(uint8_t port);
-void cli_cdc_rx_notify(uint8_t port);
+void usb_vbus_event(bool b_vbus_high);
+bool usb_cdc_enable(uint8_t port);
+void usb_cdc_disable(uint8_t port);
+void usb_cdc_rx_notify(uint8_t port);
 
 /* Callback functions are using FreeRTOS API functions so ensure the USB
 interrupt priority is at or below configMAX_SYSCALL_INTERRUPT_PRIORITY. */
@@ -132,9 +132,9 @@ interrupt priority is at or below configMAX_SYSCALL_INTERRUPT_PRIORITY. */
 #define  UDI_CDC_PORT_NB 2
 
 //! Interface callback definition
-#define  UDI_CDC_ENABLE_EXT(port)				cli_cdc_enable(port)
-#define  UDI_CDC_DISABLE_EXT(port)				cli_cdc_disable(port)
-#define  UDI_CDC_RX_NOTIFY(port)				cli_cdc_rx_notify(port)
+#define  UDI_CDC_ENABLE_EXT(port)				usb_cdc_enable(port)
+#define  UDI_CDC_DISABLE_EXT(port)				usb_cdc_disable(port)
+#define  UDI_CDC_RX_NOTIFY(port)				usb_cdc_rx_notify(port)
 #define  UDI_CDC_SET_CODING_EXT(port,cfg)
 #define  UDI_CDC_SET_DTR_EXT(port,set)
 #define  UDI_CDC_SET_RTS_EXT(port,set)

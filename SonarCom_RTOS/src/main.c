@@ -1,6 +1,24 @@
-/**
- * main routine for SonarCom_RTOS
+/*
+ * main.c
+ *
+ * Main routine for SonarCom_RTOS
+ *
+ * Created: 2016-02-14 15:37:32
+ *  Author: Max
+ */ 
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INCLUDES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFINES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ LOCAL VARIABLES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//~~~~~~~~~~~~~~~~~~~~~~~~ LOCAL FUNCTION DECLARATIONS ~~~~~~~~~~~~~~~~~~~~~~~~~
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/*******************************************************************************
+ * USB CDC Task creator
+ * Creates both the CLI and Data Channel USB Task
  */
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INCLUDES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #include <asf.h>
 #include "application_hooks.h"
@@ -30,6 +48,8 @@
 #include "USB_CDC_tasks.h"
 #include "task_queues.h"
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFINES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 /* The priorities at which various tasks will get created. */
 #define SOFTWARE_TIMER_RATE		(200 / portTICK_PERIOD_MS)
 
@@ -41,6 +61,7 @@
 "--  ## DEBUG OUTPUT INTERFACE ##  --\r\n" \
 "------------------------------------\r\n"
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * Main routine.
@@ -81,11 +102,11 @@ int main (void) {
 #ifdef CONF_SCOM_ENABLE_FREERTOS_GPS_USART
 	/* Initialize FreeRTOS GPS USART driver */
 	uint8_t *gps_rx_buffer;
-	configASSERT(gps_rx_buffer = (uint8_t*)pvPortMalloc(GPS_MAX_SENTENCE_LENGTH));
+	configASSERT(gps_rx_buffer = (uint8_t*)pvPortMalloc(GPS_RX_BUFFER_SIZE));
 	
 	freertos_peripheral_options_t gps_periph_opt = {
 		.receive_buffer = gps_rx_buffer,
-		.receive_buffer_size = GPS_MAX_SENTENCE_LENGTH,
+		.receive_buffer_size = GPS_RX_BUFFER_SIZE,
 		.interrupt_priority = configLIBRARY_LOWEST_INTERRUPT_PRIORITY - 1,
 		.operation_mode = USART_RS232,
 		.options_flags = WAIT_RX_COMPLETE | WAIT_TX_COMPLETE
