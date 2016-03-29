@@ -23,6 +23,11 @@ int create_task_queues(void) {
 	data_channel_queue = xQueueCreate(10, sizeof(uint8_t*));
 	response_queue = xQueueCreate(10, sizeof(uint8_t*));
 	
+	printf("command_queue = %p\n", command_queue);
+	printf("data_channel_queue = %p\n", data_channel_queue);
+	printf("response_queue = %p\n", response_queue);
+	
+	configASSERT(command_queue);
 	configASSERT(response_queue);
 	configASSERT(data_channel_queue);
 	

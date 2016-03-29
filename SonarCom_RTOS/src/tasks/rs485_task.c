@@ -166,18 +166,51 @@ static void rs485_task(void *pvParameters) {
  */
 void rs485_send_packet(void) {
 	uint8_t *packet_ptr;
+	uint8_t *data_ptr;
 	uint16_t packet_len;
 	status_code_t status;
 
 	/* Check if there are any pending commands to send to the Sonar Fish */	
-	if (xQueueReceive(command_queue, packet_ptr, (TickType_t)0) == pdTRUE) {
-		printf("Sending Command packet to Sonar\n");
+	if (xQueueReceive(command_queue, &packet_ptr, (TickType_t)0) == pdTRUE) {
+		printf("Sending Command packet to Sonar: %s\n", packet_ptr);
 		packet_len = ((struct packet_header_t*)packet_ptr)->length;
+		for (int i = 0; i < packet_len; i++) {
+			printf("0x%.2x ", packet_ptr[i]);
+		}
+		printf("\n");
 		status = freertos_usart_write_packet(CONF_RS485_USART, packet_ptr, packet_len, 100/portTICK_PERIOD_MS);
 		if (status != STATUS_OK) {
 			printf("RS485: rs485_send_packet (command) failed %d\n", status);
 		}
 		vPortFree(packet_ptr);
+
+	////////////////////////
+	//
+		/* Lets fake a response packet until we get the SonarFish up and running... */
+		printf("Fakeing a response from Sonar Fish\n");
+		packet_len = PACKET_HEADER_SIZE + 5 + PACKET_FOOTER_SIZE;
+		packet_ptr = (uint8_t*)pvPortMalloc(packet_len);
+		data_ptr = &((struct packet_header_t*)packet_ptr)->data;
+		((struct packet_header_t*)packet_ptr)->start_sync[0] = START_SYNC_BYTE0;
+		((struct packet_header_t*)packet_ptr)->start_sync[1] = START_SYNC_BYTE1;
+		((struct packet_header_t*)packet_ptr)->length = packet_len;
+		((struct packet_header_t*)packet_ptr)->type = RESPONSE_PACKET;
+		*(data_ptr++) = 'M';
+		*(data_ptr++) = 'a';
+		*(data_ptr++) = 'x';
+		*(data_ptr++) = '!';
+		*(data_ptr++) = 0x00;
+		((struct packet_footer_t*)data_ptr)->end_sync[0] = END_SYNC_BYTE0;
+		((struct packet_footer_t*)data_ptr)->end_sync[1] = END_SYNC_BYTE1;
+
+		if (xQueueSend(response_queue, &packet_ptr, portMAX_DELAY) != pdPASS) {
+			printf("#WARNING: Failed to put response packet on the response_queue\n");
+			rs485_send_packet();				// Transmit any pending Tx packet
+			vPortFree(packet_ptr);
+		}
+	//
+	////////////////////////
+
 	} else {
 //		printf("Sending Idle packet to Sonar\n");
 		packet_len = ((struct packet_header_t*)idle_packet)->length;

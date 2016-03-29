@@ -74,7 +74,7 @@ static void gps_task(void *pvParameters) {
 		data_ptr++;
 		
 		/* Find end of GPS sentence (0x0A) */
-		for (packet_len = PACKET_HEADER_SIZE + PACKET_FOOTER_SIZE + 1; packet_len < GPS_RX_BUFFER_SIZE; packet_len++) {
+		for (packet_len = PACKET_HEADER_SIZE + 1 + PACKET_FOOTER_SIZE + 1; packet_len < GPS_RX_BUFFER_SIZE; packet_len++) {
 			/* Get one character from GPS UART */
 			freertos_usart_serial_read_packet(CONF_GPS_USART, data_ptr, 1, 1000/portTICK_PERIOD_MS);
 			if (*(data_ptr++) == 0x0A) {
@@ -90,6 +90,7 @@ static void gps_task(void *pvParameters) {
 
 		/* Making sure last byte is 0x00 so we can print it with printf */
 		*(data_ptr++) = 0x00;
+		packet_len++;
 		
 		/* Create packet header and footer */
 		((struct packet_header_t*)packet_ptr)->start_sync[0] = START_SYNC_BYTE0;

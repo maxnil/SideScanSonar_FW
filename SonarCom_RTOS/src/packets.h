@@ -28,6 +28,7 @@
 #define SONAR_PACKET    (uint8_t)0x02
 #define SENSOR_PACKET   (uint8_t)0x03
 #define RESPONSE_PACKET (uint8_t)0x04
+#define COMMAND_PACKET  (uint8_t)0x05
 
 /* Packet Header Size: 'Sync start' + 'Length' + 'Type' */
 #define PACKET_HEADER_SIZE (2 + 2 + 1)
