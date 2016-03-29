@@ -60,6 +60,7 @@ static const CLI_Command_Definition_t get_version_command_definition = {
 static portBASE_TYPE sonar_command(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
 	const char *parameter_string;
 	portBASE_TYPE parameter_string_length;
+	int parameter_len;
 	int packet_len;
 	int response_len;
 	uint8_t *packet_ptr;
@@ -70,14 +71,18 @@ static portBASE_TYPE sonar_command(char *pcWriteBuffer, size_t xWriteBufferLen, 
 	/* Obtain the parameter string. */
 	parameter_string = FreeRTOS_CLIGetParameter(pcCommandString, 1, &parameter_string_length);
 
-	parameter_string_length = strlen(parameter_string); // Ignore the length we got from FreeRTOR_CLIGET...
+	/* Get parameter length (ignore command word) */
+	parameter_len = strlen(parameter_string);
+	packet_len = parameter_len + PACKET_HEADER_SIZE + PACKET_FOOTER_SIZE;
 	
-	packet_len = parameter_string_length + PACKET_HEADER_SIZE + PACKET_FOOTER_SIZE;
 	/* Allocate buffer for SonarFish command */
 	packet_ptr = (uint8_t*)pvPortMalloc(packet_len);
+	
 	data_ptr = &((struct packet_header_t*)packet_ptr)->data;
-	memcpy(data_ptr, parameter_string, parameter_string_length);
-	data_ptr += parameter_string_length;
+	
+	/* Copy parameter string to data packet */
+	memcpy(data_ptr, parameter_string, parameter_len);
+	data_ptr += parameter_len;
 
 	/* Create packet header and footer */
 	((struct packet_header_t*)packet_ptr)->start_sync[0] = START_SYNC_BYTE0;
@@ -87,28 +92,28 @@ static portBASE_TYPE sonar_command(char *pcWriteBuffer, size_t xWriteBufferLen, 
 	((struct packet_footer_t*)data_ptr)->end_sync[0] = END_SYNC_BYTE0;
 	((struct packet_footer_t*)data_ptr)->end_sync[1] = END_SYNC_BYTE1;
 
-	printf("Sending \"%s\" to SonarFish (len = %d)\n", parameter_string, parameter_string_length);
+//	printf("Sending \"%s\" to SonarFish (len = %d)\n", parameter_string, parameter_len);
 
 	if (!xQueueSend(command_queue, &packet_ptr, portMAX_DELAY)) {
 		printf("#WARNING: Failed to send SonarFish Command packet to command_queue\n");
 		vPortFree(packet_ptr);
 		sprintf(pcWriteBuffer, "Failed to send SonarFish Command packet to command_queue\n");
 	} else {
-		if (xQueueReceive(response_queue, &packet_ptr, 5000/portTICK_PERIOD_MS) == pdTRUE) {
-			printf("Receiving response from Sonar: %s\n", packet_ptr);
+		if (xQueueReceive(response_queue, &packet_ptr, RESPONSE_TIMEOUT_MS/portTICK_PERIOD_MS) == pdTRUE) {
+//			printf("Receiving response from Sonar: %s\n", packet_ptr);
 			packet_len = ((struct packet_header_t*)packet_ptr)->length;
 			response_len = packet_len - PACKET_HEADER_SIZE - PACKET_FOOTER_SIZE;
-			for (int i = 0; i < packet_len; i++) {
-				printf("0x%.2x ", packet_ptr[i]);
-			}
-			printf("\n");
+//Bort			for (int i = 0; i < packet_len; i++) {
+//Bort				printf("0x%.2x ", packet_ptr[i]);
+//Bort			}
+//Bort			printf("\n");
+			/* Get packet payload */
 			data_ptr = &((struct packet_header_t*)packet_ptr)->data;
 			sprintf(pcWriteBuffer, data_ptr);
 			vPortFree(packet_ptr);
 		} else {
-			printf("Did not receive any response from Sonar\n");
+			printf("### Sonar command timeout\n");
 		}
-//		sprintf(pcWriteBuffer, "sonarFish response (not yet implemented)\n");
 	}
 	
 	return pdFALSE;

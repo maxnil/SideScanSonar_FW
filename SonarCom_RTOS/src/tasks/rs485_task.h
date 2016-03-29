@@ -19,6 +19,9 @@
 
 #define RS485_RX_BUFFER_SIZE	2048
 
+/* Timeout time (in ms) on RS485 interface */
+#define RS485_TIMEOUT_MS 1000
+
 /* RS485 Task creator */
 void create_rs485_task(void);
 
