@@ -1,0 +1,20 @@
+
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Atmel Studio Solution File, Format Version 11.00
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "SonarCom_RTOS", "SonarCom_RTOS\SonarCom_RTOS_6_2.cproj", "{D7708F67-C567-4F10-8581-F96711BAA1F4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM = Debug|ARM
+		Release|ARM = Release|ARM
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D7708F67-C567-4F10-8581-F96711BAA1F4}.Debug|ARM.ActiveCfg = Debug|ARM
+		{D7708F67-C567-4F10-8581-F96711BAA1F4}.Debug|ARM.Build.0 = Debug|ARM
+		{D7708F67-C567-4F10-8581-F96711BAA1F4}.Release|ARM.ActiveCfg = Release|ARM
+		{D7708F67-C567-4F10-8581-F96711BAA1F4}.Release|ARM.Build.0 = Release|ARM
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

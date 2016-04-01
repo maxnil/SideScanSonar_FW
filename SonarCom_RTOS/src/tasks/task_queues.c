@@ -10,7 +10,6 @@
 #include "queue.h"
 
 #include "task_queues.h"
-#include "scom.h"
 
 QueueHandle_t command_queue;
 QueueHandle_t data_channel_queue;

@@ -5,6 +5,8 @@
  *  Author: Max
  */ 
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ INCLUDES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 #include <asf.h>
 #include <string.h>
 
@@ -14,41 +16,11 @@
 #include "conf_afec.h"
 #include "conf_spi_master.h"
 #include "conf_twi_master.h"
-//#include "conf_timer.h"
 #include "conf_uart_serial.h"
-//#include "rs485.h"
 
-//Bool sonar_pwr_en = false;
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
-#if 0
-/**
- * \brief Interrupt handler for the TC TC_CHANNEL_CAPTURE
- */
-void TC_RS485_TIMEOUT_Handler(void) {
-	uint32_t tc_status;
-	
-	tc_status = tc_get_status(TC, TC_RS485_TIMEOUT_CHANNEL);
-	
-	/* Check for RX timeout */
-	if ((tc_status & TC_SR_CPCS) == TC_SR_CPCS) {
-		LED_Toggle(LED3);
-		usart_enable_interrupt(CONF_RS485_USART, US_IER_TXEMPTY);
-		usart_disable_interrupt(CONF_RS485_USART, US_IER_TIMEOUT);
-
-		/* Disable RX, enable TX */
-		usart_enable_tx(CONF_RS485_USART);
-		usart_disable_rx(CONF_RS485_USART);
-			
-		rs485_send_ping();
-	}
-}
-#endif
-
-
-
-/**********************************************************************
+/*******************************************************************************
  * Initialize Analog inputs and internal Temperature Sensor
  */
 void scom_analog_init(void) {
@@ -87,7 +59,7 @@ void scom_analog_init(void) {
 }
 
 
-/**********************************************************************
+/*******************************************************************************
  * Initialize STDIO Debug Console
  */
 void scom_debug_console_init(void) {
@@ -100,76 +72,7 @@ void scom_debug_console_init(void) {
 }
 
 
-/**********************************************************************
- * Initialize TWI/I2C controller
- */
-void scom_twi_init(void) {
-	twi_master_options_t opt;
-
-	memset((void *)&opt, 0, sizeof(opt));
-	opt.speed = CONF_TWI_SPEED;
-	opt.chip  = 0x00; // ?? /Max
-
-	// Initialize the TWI master driver.
-	twi_master_setup(CONF_TWI, &opt);
-}
-
-
-/**********************************************************************
- * Initialize SPI controller
- */
-void scom_spi_init(void) {
-	struct spi_device spi_device_ext = {
-		.id = CONF_SPI_EXT_DEVICE_ID
-	};
-
-	struct spi_device spi_device_disp = {
-		.id = CONF_SPI_DISP_DEVICE_ID
-	};
-
-	spi_master_init(CONF_SPI);
-	spi_master_setup_device(CONF_SPI, &spi_device_disp, CONF_SPI_DISP_MODE, CONF_SPI_DISP_BAUDRATE, 0);
-	spi_set_bits_per_transfer(CONF_SPI, spi_device_disp.id, CONF_SPI_DISP_BITS_PER_TRANSFER);
-
-	spi_master_setup_device(CONF_SPI, &spi_device_ext, CONF_SPI_EXT_MODE, CONF_SPI_EXT_BAUDRATE, 0);
-	spi_set_bits_per_transfer(CONF_SPI, spi_device_ext.id, CONF_SPI_EXT_BITS_PER_TRANSFER);
-	spi_enable(SPI);
-}
-
-
-#if 0
-/**********************************************************************
- * Enable Sonar Power
- */
-void sonar_power_enable(Bool sonar_enable) {
-	if (sonar_enable) {
-#ifdef DEBUG_L1
-		printf("Sonar power is on\n");
-#endif
-		LED_Off(LED0);												// Turn off green LED #0
-		LED_On(LED1);												// Turn on red LED #1
-		ioport_set_pin_level(RELAY_GPIO, RELAY_ACTIVE_LEVEL);		// Turn on relay
-	} else {
-#ifdef DEBUG_L1
-		printf("Sonar power is off\n");
-#endif
-		LED_Off(LED0);												// Turn off green LED #0
-		LED_Off(LED1);												// Turn off red LED #1
-		ioport_set_pin_level(RELAY_GPIO, RELAY_INACTIVE_LEVEL);		// Turn off relay		
-	}	
-	sonar_pwr_en = sonar_enable;
-}
-
-
-/**********************************************************************
- * Check Sonar Power status
- */
-Bool sonar_power_is_enabled(void) {
-	return sonar_pwr_en;
-}
-#endif
-
-/**********************************************************************
+/*******************************************************************************
  * Get chip temperature (in Celsius)
  */
 int32_t get_chip_temperature(void) {
@@ -190,6 +93,9 @@ int32_t get_chip_temperature(void) {
 }
 
 
+/*******************************************************************************
+ * Get analog voltage value
+ */
 int32_t get_analog_input(int adc_nr) {
 	int32_t ul_vol;
 	int32_t ul_value;

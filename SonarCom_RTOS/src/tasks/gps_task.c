@@ -20,7 +20,6 @@
 #include "gps_task.h"
 #include "packets.h"
 #include "task_queues.h"
-#include "scom.h"
 
 //~~~~~~~~~~~~~~~~~~~~~~~~ LOCAL FUNCTION DECLARATIONS ~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -9,7 +9,7 @@
 #ifndef CONF_SONARCOM_H_
 #define CONF_SONARCOM_H_
 
-#define SW_VERSION "v0.1"
+#define SW_VERSION "v0.1.1"
 
 #define DEBUG_L1
 
@@ -24,7 +24,7 @@
 //#define CONF_SCOM_ENABLE_TWI
 #define CONF_SCOM_ENABLE_FREERTOS_TWI
 
-//#define CONF_SCOM_ENABLE_SSD1322
+#define CONF_SCOM_ENABLE_SSD1322
 
 /* Enable tasks */
 #define CONF_SCOM_ENABLE_GPS_TASK

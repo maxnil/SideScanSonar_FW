@@ -23,7 +23,6 @@
 #include <asf.h>
 #include "application_hooks.h"
 #include "scom_init.h"
-#include "scom.h"
 
 /* Configuration */
 #include "conf_sonarcom.h"
@@ -32,6 +31,8 @@
 /* Drivers */
 #include "led.h"
 #include "rtcc.h"
+#include "components/ssd1322/ssd1322.h"
+#include "sonarcom_image.h"
 
 /* FreeRTOS */
 #include "FreeRTOS.h"
@@ -55,7 +56,7 @@
 
 #define DBG_WELCOME_HEADER \
 "------------------------------------\r\n" \
-"-- SonarCom_RTOS 2016 " SW_VERSION "        --\r\n" \
+"-- SonarCom_RTOS 2016 " SW_VERSION "      --\r\n" \
 "-- Compiled: "__DATE__" "__TIME__" --\r\n" \
 "------------------------------------\r\n" \
 "--  ## DEBUG OUTPUT INTERFACE ##  --\r\n" \
@@ -179,11 +180,6 @@ int main (void) {
 
 	spi_master_setup_device(CONF_SPI, &spi_device_ext, CONF_SPI_EXT_MODE, CONF_SPI_EXT_BAUDRATE, 0);
 	spi_set_bits_per_transfer(CONF_SPI, spi_device_ext.id, CONF_SPI_EXT_BITS_PER_TRANSFER);
-#else
-#ifdef CONF_SCOM_ENABLE_SPI
-	/* Initialize SPI */
-	scom_spi_init();
-#endif
 #endif
 
 #ifdef CONF_SCOM_ENABLE_FREERTOS_TWI
@@ -198,11 +194,6 @@ int main (void) {
 
 	freertos_twi_master_init(CONF_TWI, &twi_periph_opt);
 	twi_set_speed(CONF_TWI, CONF_TWI_SPEED, sysclk_get_cpu_hz());
-#else
-#ifdef CONF_SCOM_ENABLE_TWI
-	/* Initialize TWI/I2C */
-	scom_twi_init();
-#endif
 #endif
 
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -244,6 +235,11 @@ int main (void) {
 #ifdef CONF_SCOM_ENABLE_USB_CDC_TASK
 	/* Create USB CDC tasks */
 	create_usb_cdc_tasks();
+#endif
+
+#ifdef CONF_SCOM_ENABLE_SSD1322
+	/* Put Image on display */
+	ssd1322_show_image(image_data_scom);
 #endif
 
 	LED_On(LED2_GPIO);	// Turn on Green LED

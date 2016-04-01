@@ -1060,15 +1060,6 @@
     <Compile Include="src\packets.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\scom.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\services\rs485.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\services\rs485.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="src\sonarcom_image.h">
       <SubType>compile</SubType>
     </Compile>

@@ -15,12 +15,6 @@ void scom_analog_init(void);
 /* Debug Console initialization */
 void scom_debug_console_init(void);
 
-/* SPI initialization */
-void scom_spi_init(void);
-
-/* TWI/I2C initialization */
-void scom_twi_init(void);
-
 /* Enable Sonar Power */
 void sonar_power_enable(Bool sonar_enable);
 
