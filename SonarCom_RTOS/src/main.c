@@ -222,8 +222,6 @@ int main (void) {
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Create tasks
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-	printf("FreeHeepSize 1: %d\n", xPortGetFreeHeapSize());
 	
 	/* Create Task Queues */
 	create_task_queues();
@@ -251,9 +249,6 @@ int main (void) {
 	LED_On(LED2_GPIO);	// Turn on Green LED
 	LED_Off(LED3_GPIO);	// Turn off Red LED
 	
-	printf("FreeHeepSize 2: %d\n", xPortGetFreeHeapSize());
-
-
 	printf("Starting all RTOS tasks\n");
 	vTaskStartScheduler();	// This function call should never return
 	

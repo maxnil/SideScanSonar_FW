@@ -62,13 +62,12 @@ static portBASE_TYPE sonar_command(char *pcWriteBuffer, size_t xWriteBufferLen, 
 	portBASE_TYPE parameter_string_length;
 	int parameter_len;
 	int packet_len;
-	int response_len;
 	uint8_t *packet_ptr;
 	uint8_t *data_ptr;
 	
 	configASSERT(pcWriteBuffer);
 	
-	/* Obtain the parameter string. */
+	/* Obtain the parameter string (don't care about the parameter_string_length */
 	parameter_string = FreeRTOS_CLIGetParameter(pcCommandString, 1, &parameter_string_length);
 
 	/* Get parameter length (ignore command word) */
@@ -94,26 +93,25 @@ static portBASE_TYPE sonar_command(char *pcWriteBuffer, size_t xWriteBufferLen, 
 
 //	printf("Sending \"%s\" to SonarFish (len = %d)\n", parameter_string, parameter_len);
 
-	if (!xQueueSend(command_queue, &packet_ptr, portMAX_DELAY)) {
-		printf("#WARNING: Failed to send SonarFish Command packet to command_queue\n");
-		vPortFree(packet_ptr);
-		sprintf(pcWriteBuffer, "Failed to send SonarFish Command packet to command_queue\n");
-	} else {
+	/* Put Sonar Command packet on command queue */
+	if (xQueueSend(command_queue, &packet_ptr, portMAX_DELAY)) {
+		/* Get Sonar response */
 		if (xQueueReceive(response_queue, &packet_ptr, RESPONSE_TIMEOUT_MS/portTICK_PERIOD_MS) == pdTRUE) {
-//			printf("Receiving response from Sonar: %s\n", packet_ptr);
-			packet_len = ((struct packet_header_t*)packet_ptr)->length;
-			response_len = packet_len - PACKET_HEADER_SIZE - PACKET_FOOTER_SIZE;
-//Bort			for (int i = 0; i < packet_len; i++) {
-//Bort				printf("0x%.2x ", packet_ptr[i]);
-//Bort			}
-//Bort			printf("\n");
+			//			printf("Receiving response from Sonar: %s\n", packet_ptr);
+			//			packet_len = ((struct packet_header_t*)packet_ptr)->length;
+			//			response_len = packet_len - PACKET_HEADER_SIZE - PACKET_FOOTER_SIZE;
+
 			/* Get packet payload */
 			data_ptr = &((struct packet_header_t*)packet_ptr)->data;
-			sprintf(pcWriteBuffer, data_ptr);
+			sprintf(pcWriteBuffer, (char*)data_ptr);
 			vPortFree(packet_ptr);
 		} else {
 			printf("### Sonar command timeout\n");
 		}
+	} else {
+		printf("#WARNING: Failed to send SonarFish Command packet to command_queue\n");
+		sprintf(pcWriteBuffer, "Failed to send SonarFish Command packet to command_queue\n");
+		vPortFree(packet_ptr);
 	}
 	
 	return pdFALSE;
@@ -121,48 +119,44 @@ static portBASE_TYPE sonar_command(char *pcWriteBuffer, size_t xWriteBufferLen, 
 
 static const CLI_Command_Definition_t sonar_command_definition = {
 	"sonar",			 		/* The command string to type. */
-	"sonar x y:\r\n  Send command 'x' with argument 'y' to SonarFish\r\n\r\n",
+	"sonar \'cmd arg\' :\r\n  Send command 'x' with argument 'y' to SonarFish\r\n\r\n",
 	sonar_command,				/* The function to run. */
 	-1							/* Variable number of parameters are expected. */
 };
 
 
 /*******************************************************************************
- * "Get CLI Ping" command
- * Returns 'ping'
+ * "ping" command
+ * Returns 'pong1' on CLI interface and 'pong2' on data channel
  */
-static portBASE_TYPE get_cli_ping_command(char *pcWriteBuffer, size_t xWriteBufferLen,	const char *pcCommandString) {
+static portBASE_TYPE ping_command(char *pcWriteBuffer, size_t xWriteBufferLen,	const char *pcCommandString) {
+	const uint8_t pong_packet[14] = {START_SYNC_BYTE0, START_SYNC_BYTE1, 0x0E, 0x00, PONG_PACKET, 'p', 'o', 'n', 'g', '2', '\n', 0x00, END_SYNC_BYTE0, END_SYNC_BYTE1};
+	uint8_t *packet_ptr;
+
 	configASSERT(pcWriteBuffer);
+
+	/* Send "ping" back on CLI USB CDC interface */
+	sprintf(pcWriteBuffer, "pong1\n");
 	
-	sprintf(pcWriteBuffer, "ping\n");
-	
+	/* Allocate Pong packet buffer */
+	packet_ptr = (uint8_t*)pvPortMalloc(16);
+
+	/* Copy constant Pong packet */
+	memcpy(packet_ptr, pong_packet, 14);
+
+	/* Put Pong packet on the USB CDC data queue */
+	if (!xQueueSend(data_channel_queue, &packet_ptr, portMAX_DELAY)) {
+		printf("#WARNING: Failed to send Ping packet to data_queue\n");
+		vPortFree(packet_ptr);
+	}
+
 	return pdFALSE;
 }
 
 static const CLI_Command_Definition_t get_cli_ping_command_definition = {
-	"get_cli_ping",				/* The command string to type. */
-	"get_cli_ping:\r\n  Returns ping\r\n\r\n",
-	get_cli_ping_command,		/* The function to run. */
-	0							/* No parameters are expected. */
-};
-
-
-/*******************************************************************************
- * "Get Data Ping" command
- * Returns 'ping' on the Data port
- */
-static portBASE_TYPE get_data_ping_command(char *pcWriteBuffer, size_t xWriteBufferLen,	const char *pcCommandString) {
-	configASSERT(pcWriteBuffer);
-	
-	sprintf(pcWriteBuffer, "1 (and ping to the Data port)\n");
-	
-	return pdFALSE;
-}
-
-static const CLI_Command_Definition_t get_data_ping_command_definition = {
-	"get_data_ping",			/* The command string to type. */
-	"get_data_ping:\r\n  Returns ping on the data port\r\n\r\n",
-	get_data_ping_command,		/* The function to run. */
+	"ping",					/* The command string to type. */
+	"ping:\r\n  Returns \'pong\' on both USB CDC interfaces\r\n\r\n",
+	ping_command,			/* The function to run. */
 	0							/* No parameters are expected. */
 };
 
@@ -338,13 +332,8 @@ static const CLI_Command_Definition_t set_sonar_pwr_command_definition = {
  * "Task Status" command
  */
 static portBASE_TYPE task_stats_command(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
-	const int8_t *const task_table_header = (int8_t *) "Task          State  Priority  Stack	#\r\n************************************************\r\n";
+	const int8_t *const task_table_header = (int8_t *) "Task  State Pri Stack #\r\n*************************************\r\n";
 
-	/* Remove compile time warnings about unused parameters, and check the
-	write buffer is not NULL.  NOTE - for simplicity, this example assumes the
-	write buffer length is adequate, so does not check for buffer overflows. */
-	(void) pcCommandString;
-	(void) xWriteBufferLen;
 	configASSERT(pcWriteBuffer);
 
 	/* Generate a table of task stats. */
@@ -369,10 +358,8 @@ static const CLI_Command_Definition_t task_stats_command_definition = {
  * Returns task run-time status
  */
 static portBASE_TYPE ps_command(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
-	const int8_t *const stats_table_header = (int8_t *) "Task            Abs Time      % Time\r\n****************************************\r\n";
+	const int8_t *const stats_table_header = (int8_t *) "Task        Abs Time     % Time\r\n*********************************\r\n";
 
-	(void) pcCommandString;
-	(void) xWriteBufferLen;
 	configASSERT(pcWriteBuffer);
 
 	/* Generate a table of task stats. */
@@ -391,15 +378,34 @@ static const CLI_Command_Definition_t ps_command_definition = {
 
 
 /*******************************************************************************
+ * "mem" command
+ * Returns memory status
+ */
+static portBASE_TYPE mem_command(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	configASSERT(pcWriteBuffer);
+
+	/* Return current Heap memory status */
+	sprintf(pcWriteBuffer, "Free heep size: %d bytes\r\n", xPortGetFreeHeapSize());
+
+	return pdFALSE;
+}
+
+static const CLI_Command_Definition_t mem_command_definition = {
+	"mem",					/* The command string to type. */
+	"mem:\r\n Displays memory usage\r\n\r\n",
+	mem_command,				/* The function to run. */
+	0						/* No parameters are expected. */
+};
+
+
+/*******************************************************************************
  * Registers all CLI commands
  */
-void vRegisterCLICommands(void)
-{
+void vRegisterCLICommands(void) {
 	/* Register all the command line commands defined immediately above. */
 	FreeRTOS_CLIRegisterCommand(&sonar_command_definition);
 	FreeRTOS_CLIRegisterCommand(&get_version_command_definition);
 	FreeRTOS_CLIRegisterCommand(&get_cli_ping_command_definition);
-	FreeRTOS_CLIRegisterCommand(&get_data_ping_command_definition);
 	FreeRTOS_CLIRegisterCommand(&get_time_command_definition);
 	FreeRTOS_CLIRegisterCommand(&set_time_command_definition);
 	FreeRTOS_CLIRegisterCommand(&get_date_command_definition);
@@ -408,4 +414,5 @@ void vRegisterCLICommands(void)
 	
 	FreeRTOS_CLIRegisterCommand(&task_stats_command_definition);
 	FreeRTOS_CLIRegisterCommand(&ps_command_definition);
+	FreeRTOS_CLIRegisterCommand(&mem_command_definition);
 }

@@ -279,7 +279,7 @@ void ssd1322_write_text(const char *string, int row, int col) {
 		tkn = string[i];
 		if ((tkn >= 0x20) && (tkn <= 0x7F)) {
 			for (j = 0; j <= 5; j++) {
-//				data = Font_12.chars->image.data[j + 5*(tkn - 0x20)];
+				data = 0x00; //Font_12.chars->image.data[j + 5*(tkn - 0x20)];
 				ssd1322_send_data((((data & 0x80)>>4)*0xF));
 			}
 			ssd1322_send_data(0x00);

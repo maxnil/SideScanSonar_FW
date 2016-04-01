@@ -1374,9 +1374,6 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 
 	configASSERT( pxQueue );
 	configASSERT( !( ( pvBuffer == NULL ) && ( pxQueue->uxItemSize != ( UBaseType_t ) 0U ) ) );
-	if (( pvBuffer == NULL ) && ( pxQueue->uxItemSize != ( UBaseType_t ) 0U )) {
-		printf ("## xQueueGenericReceive(%p): pvBuffer = NULL, pxQueue->uxItemSize = 0\n", xQueue);
-	}
 	#if ( ( INCLUDE_xTaskGetSchedulerState == 1 ) || ( configUSE_TIMERS == 1 ) )
 	{
 		configASSERT( !( ( xTaskGetSchedulerState() == taskSCHEDULER_SUSPENDED ) && ( xTicksToWait != 0 ) ) );
