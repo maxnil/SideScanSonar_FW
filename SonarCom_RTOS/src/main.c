@@ -148,11 +148,9 @@ int main (void) {
 	};
 
 	configASSERT(freertos_usart_serial_init(CONF_RS485_USART, &rs485_usart_opt, &rs485_periph_opt));
-#else
-#ifdef CONF_SCOM_ENABLE_RS485
-	/* Initialize RS485 USART */
-	rs485_init();
-#endif
+	
+	/* Set RS485 mode. */
+	CONF_RS485_USART->US_MR = (CONF_RS485_USART->US_MR & ~US_MR_USART_MODE_Msk) | US_MR_USART_MODE_RS485;
 #endif
 
 #ifdef CONF_SCOM_ENABLE_FREERTOS_SPI
@@ -231,6 +229,8 @@ int main (void) {
 	/* Create Timer task */
 	create_timer_task(SOFTWARE_TIMER_RATE);
 #endif
+
+	sonar_power_enable(SCOM_DEFALT_SONAR_PWR);
 
 #ifdef CONF_SCOM_ENABLE_USB_CDC_TASK
 	/* Create USB CDC tasks */

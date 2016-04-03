@@ -26,6 +26,8 @@
 
 #define CONF_SCOM_ENABLE_SSD1322
 
+#define SCOM_DEFALT_SONAR_PWR true
+
 /* Enable tasks */
 #define CONF_SCOM_ENABLE_GPS_TASK
 #define CONF_SCOM_ENABLE_RS485_TASK
