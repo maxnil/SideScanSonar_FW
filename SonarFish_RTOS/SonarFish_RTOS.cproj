@@ -569,10 +569,22 @@
     <Compile Include="src\ASF\sam\drivers\usart\usart.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\ASF\thirdparty\FreeRTOS-8.2.3\source\FreeRTOS_CLI.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ASF\thirdparty\FreeRTOS-8.2.3\source\FreeRTOS_CLI.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\config\conf_sonarfish.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\packets.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\service\CLI-commands.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\service\CLI-commands.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\service\led.c">
@@ -585,6 +597,12 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\sfish_init.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\tasks\cli_task.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\tasks\cli_task.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\tasks\rs485_task.c">

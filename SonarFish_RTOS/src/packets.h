@@ -39,6 +39,14 @@
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ STRUCTS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+struct packet_t {
+	uint8_t start_sync[2];
+	uint16_t length;
+	uint8_t type;
+//	uint8_t dummy[3];
+	uint8_t data[];
+};
+
 struct packet_header_t {
 	uint8_t start_sync[2];
 	uint16_t length;

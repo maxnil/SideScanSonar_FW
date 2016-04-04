@@ -40,6 +40,7 @@
 #include "task.h"
 
 /* Tasks */
+#include "cli_task.h"
 #include "rs485_task.h"
 //#include "sensors_task.h"
 #include "timer_task.h"
@@ -207,14 +208,19 @@ int main (void) {
 	/* Create Task Queues */
 	create_task_queues();
 
+#ifdef CONF_SFISH_ENABLE_CLI_TASK
+	/* Create RS485 task */
+	create_rs485_task();
+#endif
+
 #ifdef CONF_SFISH_ENABLE_RS485_TASK
 	/* Create RS485 task */
 	create_rs485_task();
 #endif
 
 #ifdef CONF_SFISH_ENABLE_SENSORS_TASK
-	/* Create Sensor task */
-	create_sensors_task();
+	/* Create CLI task */
+	create_cli_task();
 #endif
 
 #ifdef CONF_SFISH_ENABLE_TIMER_TASK
