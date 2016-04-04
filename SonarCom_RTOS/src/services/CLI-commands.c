@@ -30,6 +30,22 @@
 #include "sonar_fish.h"
 #include "conf_sonarcom.h"
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFINES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#define COMMAND_FUNCTION_ARGS char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString
+
+//~~~~~~~~~~~~~~~~~~~~~~~~ LOCAL FUNCTION DECLARATIONS ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+static portBASE_TYPE get_version_command(COMMAND_FUNCTION_ARGS);
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ LOCAL VARIABLES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+static const CLI_Command_Definition_t get_version_command_definition = {
+	"get_version",
+	"get_version:\r\n  Software version\r\n\r\n",
+	get_version_command,
+	0};
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /*******************************************************************************
@@ -43,14 +59,6 @@ static portBASE_TYPE get_version_command(char *pcWriteBuffer, size_t xWriteBuffe
 
 	return pdFALSE;
 }
-
-static const CLI_Command_Definition_t get_version_command_definition = {
-	"get_version",				/* The command string to type. */
-	"get_version:\r\n  Software version\r\n\r\n",
-	get_version_command,		/* The function to run. */
-	0							/* No parameters are expected. */
-};
-
 
 /*******************************************************************************
  * "Sonar" command
@@ -118,10 +126,10 @@ static portBASE_TYPE sonar_command(char *pcWriteBuffer, size_t xWriteBufferLen, 
 }
 
 static const CLI_Command_Definition_t sonar_command_definition = {
-	"sonar",			 		/* The command string to type. */
+	"sonar",
 	"sonar \'cmd arg\' :\r\n  Send command 'x' with argument 'y' to SonarFish\r\n\r\n",
-	sonar_command,				/* The function to run. */
-	-1							/* Variable number of parameters are expected. */
+	sonar_command,
+	-1
 };
 
 
@@ -154,10 +162,10 @@ static portBASE_TYPE ping_command(char *pcWriteBuffer, size_t xWriteBufferLen,	c
 }
 
 static const CLI_Command_Definition_t get_cli_ping_command_definition = {
-	"ping",					/* The command string to type. */
+	"ping",
 	"ping:\r\n  Returns \'pong\' on both USB CDC interfaces\r\n\r\n",
-	ping_command,			/* The function to run. */
-	0							/* No parameters are expected. */
+	ping_command,
+	0
 };
 
 
@@ -180,10 +188,10 @@ static portBASE_TYPE get_time_command(char *pcWriteBuffer, size_t xWriteBufferLe
 }
 
 static const CLI_Command_Definition_t get_time_command_definition = {
-	"get_time",				/* The command string to type. */
+	"get_time",
 	"get_time:\r\n  Displays the current time\r\n\r\n",
-	get_time_command,		/* The function to run. */
-	0						/* No parameters are expected. */
+	get_time_command,
+	0
 };
 
 
@@ -221,9 +229,9 @@ static portBASE_TYPE set_time_command(char *pcWriteBuffer, size_t xWriteBufferLe
 }
 
 static const CLI_Command_Definition_t set_time_command_definition = {
-	"set_time",				/* The command string to type. */
+	"set_time",
 	"set_time hour:minute:second:\r\n  Sets the current time\r\n\r\n",
-	set_time_command,		/* The function to run. */
+	set_time_command,
 	1						/* 1 parameter are expected. */
 };
 
@@ -247,10 +255,10 @@ static portBASE_TYPE get_date_command(char *pcWriteBuffer, size_t xWriteBufferLe
 }
 
 static const CLI_Command_Definition_t get_date_command_definition = {
-	"get_date",				/* The command string to type. */
+	"get_date",
 	"get_date:\r\n  Displays the current date\r\n\r\n",
-	get_date_command,		/* The function to run. */
-	0						/* No parameters are expected. */
+	get_date_command,
+	0
 };
 
 
@@ -288,9 +296,9 @@ static portBASE_TYPE set_date_command(char *pcWriteBuffer, size_t xWriteBufferLe
 }
 
 static const CLI_Command_Definition_t set_date_command_definition = {
-	"set_date",				/* The command string to type. */
+	"set_date",
 	"set_date year-month-day:\r\n  Sets the current date\r\n\r\n",
-	set_date_command,		/* The function to run. */
+	set_date_command,
 	1						/* 1 parameter are expected. */
 };
 
@@ -321,10 +329,10 @@ static portBASE_TYPE set_sonar_pwr_command(char *pcWriteBuffer, size_t xWriteBuf
 }
 
 static const CLI_Command_Definition_t set_sonar_pwr_command_definition = {
-	"set_sonar_pwr",		/* The command string to type. */
+	"set_sonar_pwr",
 	"set_sonar_pwr 0|1|?:\r\n  0 = off, 1 = on, ? = check status of the Sonar Fish power\r\n\r\n",
-	set_sonar_pwr_command,	/* The function to run. */
-	1						/* 1 parameters are expected. */
+	set_sonar_pwr_command,
+	1
 };
 
 
@@ -346,10 +354,10 @@ static portBASE_TYPE task_stats_command(char *pcWriteBuffer, size_t xWriteBuffer
 }
 
 static const CLI_Command_Definition_t task_stats_command_definition = {
-	"task-stats",		/* The command string to type. */
+	"task-stats",
 	"task-stats:\r\n Displays a table showing the state of each FreeRTOS task\r\n\r\n",
-	task_stats_command, /* The function to run. */
-	0					/* No parameters are expected. */
+	task_stats_command,
+	0
 };
 
 
@@ -370,10 +378,10 @@ static portBASE_TYPE ps_command(char *pcWriteBuffer, size_t xWriteBufferLen, con
 }
 
 static const CLI_Command_Definition_t ps_command_definition = {
-	"ps",					/* The command string to type. */
+	"ps",
 	"ps:\r\n Displays a table showing how much processing time each FreeRTOS task has used\r\n\r\n",
-	ps_command,				/* The function to run. */
-	0						/* No parameters are expected. */
+	ps_command,
+	0
 };
 
 
@@ -391,10 +399,10 @@ static portBASE_TYPE mem_command(char *pcWriteBuffer, size_t xWriteBufferLen, co
 }
 
 static const CLI_Command_Definition_t mem_command_definition = {
-	"mem",					/* The command string to type. */
+	"mem",
 	"mem:\r\n Displays memory usage\r\n\r\n",
-	mem_command,				/* The function to run. */
-	0						/* No parameters are expected. */
+	mem_command,
+	0
 };
 
 
