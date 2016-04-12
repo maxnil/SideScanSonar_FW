@@ -1,5 +1,6 @@
 /*
  * CLI-commands.c
+ * SonarFish CLI Commands
  *
  * Created: 2016-03-01 19:21:04
  *  Author: Max
@@ -29,180 +30,157 @@
 #include "conf_sonarfish.h"
 #include "led.h"
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFINES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/* Macro to make the lines shorter */
+#define CLI_DEF_T static const CLI_Command_Definition_t
+
+//~~~~~~~~~~~~~~~~~~~~~~~~ LOCAL FUNCTION DECLARATIONS ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+static portBASE_TYPE get_version_cmd        (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE mem_cmd                (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE ping_cmd               (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE ps_cmd                 (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_acc_en_cmd         (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_cv_en_cmd          (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_comp_en_cmd        (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_press_en_cmd       (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_pwr_en_cmd         (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_rx_deadzone_cmd    (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_rx_en_cmd          (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_rx_gain_cmd        (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_rx_gain_offset_cmd (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_rx_gain_slope_cmd  (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_rx_range_cmd       (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_rx_rec_en_cmd      (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_sens_rec_en_cmd    (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_temp_en_cmd        (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_tx_en_cmd          (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_tx_mod_cmd         (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_tx_pow_cmd         (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_tx_pulse_len_cmd   (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE task_stats_cmd         (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ LOCAL VARIABLES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+/* CLI command definitions */
+CLI_DEF_T get_version_cmd_def        = {"get_version",        "get_version\r\n",    get_version_cmd,        0};
+CLI_DEF_T mem_cmd_def                = {"mem",                "mem\r\n",            mem_cmd,                0};
+CLI_DEF_T ping_cmd_def               = {"ping",               "ping\r\n",           ping_cmd,               0};
+CLI_DEF_T ps_cmd_def                 = {"ps",                 "ps\r\n",             ps_cmd,                 0};
+CLI_DEF_T set_acc_en_cmd_def         = {"set_acc_en",         "set_acc_en",         set_acc_en_cmd,         1};
+CLI_DEF_T set_cv_en_cmd_def          = {"set_cv_en",          "set_cv_en",          set_cv_en_cmd,          1};
+CLI_DEF_T set_comp_en_cmd_def        = {"set_comp_en",        "set_comp_en",        set_comp_en_cmd,        1};
+CLI_DEF_T set_press_en_cmd_def       = {"set_press_en",       "set_press_en",       set_press_en_cmd,       1};
+CLI_DEF_T set_pwr_en_cmd_def         = {"set_pwr_en",         "set_pwr_en",         set_pwr_en_cmd,         1};
+CLI_DEF_T set_rx_deadzone_cmd_def    = {"set_rx_deadzone",    "set_rx_deadzone",    set_rx_deadzone_cmd,    1};
+CLI_DEF_T set_rx_en_cmd_def          = {"set_rx_en",          "set_rx_en",          set_rx_en_cmd,          1};
+CLI_DEF_T set_rx_gain_cmd_def        = {"set_rx_gain",        "set_rx_gain",        set_rx_gain_cmd,        1};
+CLI_DEF_T set_rx_gain_offset_cmd_def = {"set_rx_gain_offset", "set_rx_gain_offset", set_rx_gain_offset_cmd, 1};
+CLI_DEF_T set_rx_gain_slope_cmd_def  = {"set_rx_gain_slope",  "set_rx_gain_slope",  set_rx_gain_slope_cmd,  1};
+CLI_DEF_T set_rx_range_cmd_def       = {"set_rx_range",       "set_rx_range",       set_rx_range_cmd,       1};
+CLI_DEF_T set_rx_rec_en_cmd_def      = {"set_rx_rec_en",      "set_rx_rec_en",      set_rx_rec_en_cmd,      1};
+CLI_DEF_T set_sens_rec_en_cmd_def    = {"set_sens_rec_en",    "set_sens_rec_en",    set_sens_rec_en_cmd,    1};
+CLI_DEF_T set_temp_en_cmd_def        = {"set_temp_en",        "set_temp_en",        set_temp_en_cmd,        1};
+CLI_DEF_T set_tx_en_cmd_def          = {"set_tx_en",          "set_tx_en",          set_tx_en_cmd,          1};
+CLI_DEF_T set_tx_mod_cmd_def         = {"set_tx_mod",         "set_tx_mod",         set_tx_mod_cmd,         1};
+CLI_DEF_T set_tx_pow_cmd_def         = {"set_tx_pow",         "set_tx_pow",         set_tx_pow_cmd,         1};
+CLI_DEF_T set_tx_pulse_len_cmd_def   = {"set_tx_pulse_len",   "set_tx_pulse_len",   set_tx_pulse_len_cmd,   1};
+CLI_DEF_T task_stats_cmd_def         = {"task-stats",         "task-stats\r\n",     task_stats_cmd,         0};
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/*******************************************************************************
+ * Registers all CLI commands
+ */
+void vRegisterCLICommands(void) {
+	FreeRTOS_CLIRegisterCommand(&get_version_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&mem_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&ping_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&ps_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_acc_en_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_cv_en_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_comp_en_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_press_en_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_pwr_en_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_rx_deadzone_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_rx_en_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_rx_gain_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_rx_gain_offset_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_rx_gain_slope_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_rx_range_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_rx_rec_en_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_sens_rec_en_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_temp_en_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_tx_en_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_tx_mod_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_tx_pow_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_tx_pulse_len_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&task_stats_cmd_def);
+}
+
 
 /*******************************************************************************
  * "Get Version" command
  * Returns SW version
  */
-static portBASE_TYPE get_version_command(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+static portBASE_TYPE get_version_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
 	configASSERT(pcWriteBuffer);
 
-	sprintf(pcWriteBuffer, "%s (%s, %s)\n", SW_VERSION, __DATE__, __TIME__);
+	sprintf(pcWriteBuffer, "SonarFish %s (%s, %s)\n", SW_VERSION, __DATE__, __TIME__);
 
 	return pdFALSE;
 }
 
-static const CLI_Command_Definition_t get_version_command_definition = {
-	"get_version",				/* The command string to type. */
-	"get_version:\r\n  Software version\r\n\r\n",
-	get_version_command,		/* The function to run. */
-	0							/* No parameters are expected. */
-};
+
+/*******************************************************************************
+ * "mem" command
+ * Returns memory status
+ */
+static portBASE_TYPE mem_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	configASSERT(pcWriteBuffer);
+
+	/* Return current Heap memory status */
+	sprintf(pcWriteBuffer, "Free heep size: %d bytes\r\n", xPortGetFreeHeapSize());
+
+	return pdFALSE;
+}
 
 
 /*******************************************************************************
  * "ping" command
- * Returns 'pong1' on CLI interface and 'pong3' on data channel
+ * Returns 'pong'
  */
-static portBASE_TYPE ping_command(char *pcWriteBuffer, size_t xWriteBufferLen,	const char *pcCommandString) {
+static portBASE_TYPE ping_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	const uint8_t pong_packet[14] = {START_SYNC_BYTE0, START_SYNC_BYTE1, 0x0E, 0x00, PONG_PACKET, 'p', 'o', 'n', 'g', '2', '\n', 0x00, END_SYNC_BYTE0, END_SYNC_BYTE1};
+	uint8_t *packet_ptr;
+
 	configASSERT(pcWriteBuffer);
 
 	/* Send "ping" back on CLI USB CDC interface */
-	sprintf(pcWriteBuffer, "pong\n");
-
-	return pdFALSE;
-}
-
-static const CLI_Command_Definition_t get_cli_ping_command_definition = {
-	"ping",					/* The command string to type. */
-	"ping:\r\n  Returns \'pong\'\r\n\r\n",
-	ping_command,			/* The function to run. */
-	0							/* No parameters are expected. */
-};
-
-
-/*******************************************************************************
- * "Set FPGA LED" command
- * Sets FPGA LEDs
- */
-static portBASE_TYPE set_fpga_led_command(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
-	const char *parameter_string;
-	portBASE_TYPE parameter_string_length;
-	uint8_t val;
-	int status;
-
-	configASSERT(pcWriteBuffer);
+	sprintf(pcWriteBuffer, "pong1\n");
 	
-	/* Obtain the parameter string. */
-	parameter_string = FreeRTOS_CLIGetParameter(pcCommandString, 1,	&parameter_string_length);
+	/* Allocate Pong packet buffer */
+	packet_ptr = (uint8_t*)pvPortMalloc(16);
 
-	/* Get LED parameter */
-	sscanf(parameter_string, "%d", &val);
-// status 0 fpga_set_led(val);
+	/* Copy constant Pong packet */
+	memcpy(packet_ptr, pong_packet, 14);
 
-	/* Return status */
-	sprintf(pcWriteBuffer, "%d\r\n", (status == 0) ? 1 : 0);
-
-	return pdFALSE;
-}
-
-static const CLI_Command_Definition_t set_fpga_led_command_definition = {
-	"set_fpga_led",				/* The command string to type. */
-	"set_fpga_led value':\r\n  Sets the FPGA LEDs\r\n\r\n",
-	set_fpga_led_command,		/* The function to run. */
-	1						/* 1 parameter are expected. */
-};
-
-
-/*******************************************************************************
- * "Set Red LED" command
- */
-static portBASE_TYPE set_red_led_command(char *pcWriteBuffer, size_t xWriteBufferLen,	const char *pcCommandString) {
-	const char *parameter_string;	
-	portBASE_TYPE parameter_string_length;
-
-	configASSERT(pcWriteBuffer);
-	
-	/* Obtain the parameter string. */
-	parameter_string = FreeRTOS_CLIGetParameter(pcCommandString, 1, &parameter_string_length);
-	
-	/* Check parameter */
-	if (parameter_string != NULL && parameter_string[0] == '0') {
-		LED_Off(LED_RED);
-	} else if (parameter_string != NULL && parameter_string[0] == '1') {
-		LED_On(LED_RED);
+	/* Put Pong packet on the USB CDC data queue */
+	if (!xQueueSend(data_channel_queue, &packet_ptr, portMAX_DELAY)) {
+		printf("#WARNING: Failed to send Ping packet to data_queue\n");
+		vPortFree(packet_ptr);
 	}
 
-	/* Return current Sonar Power status */
-	sprintf(pcWriteBuffer, "1\r\n");
-			
 	return pdFALSE;
 }
-
-static const CLI_Command_Definition_t set_red_led_command_definition = {
-	"set_red_led",		/* The command string to type. */
-	"set_red_ledr 0|1:\r\n  0 = off, 1 = on\r\n\r\n",
-	set_red_led_command,	/* The function to run. */
-	1						/* 1 parameters are expected. */
-};
-
-
-/*******************************************************************************
- * "Set Red LED" command
- */
-static portBASE_TYPE set_red_led_command(char *pcWriteBuffer, size_t xWriteBufferLen,	const char *pcCommandString) {
-	const char *parameter_string;	
-	portBASE_TYPE parameter_string_length;
-
-	configASSERT(pcWriteBuffer);
-	
-	/* Obtain the parameter string. */
-	parameter_string = FreeRTOS_CLIGetParameter(pcCommandString, 1, &parameter_string_length);
-	
-	/* Check parameter */
-	if (parameter_string != NULL && parameter_string[0] == '0') {
-		LED_Off(LED_RED);
-	} else if (parameter_string != NULL && parameter_string[0] == '1') {
-		LED_On(LED_RED);
-	}
-
-	/* Return current Sonar Power status */
-	sprintf(pcWriteBuffer, "1\r\n");
-			
-	return pdFALSE;
-}
-
-static const CLI_Command_Definition_t set_red_led_command_definition = {
-	"set_red_led",		/* The command string to type. */
-	"set_red_ledr 0|1:\r\n  0 = off, 1 = on\r\n\r\n",
-	set_red_led_command,	/* The function to run. */
-	1						/* 1 parameters are expected. */
-};
-
-
-/*******************************************************************************
- * "Task Status" command
- */
-static portBASE_TYPE task_stats_command(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
-	const int8_t *const task_table_header = (int8_t *) "Task  State Pri Stack #\r\n*************************************\r\n";
-
-	configASSERT(pcWriteBuffer);
-
-	/* Generate a table of task stats. */
-	strcpy((char *) pcWriteBuffer, (char *) task_table_header);
-	vTaskList(pcWriteBuffer + strlen((char *) task_table_header));
-
-	/* There is no more data to return after this single string, so return
-	pdFALSE. */
-	return pdFALSE;
-}
-
-static const CLI_Command_Definition_t task_stats_command_definition = {
-	"task-stats",		/* The command string to type. */
-	"task-stats:\r\n Displays a table showing the state of each FreeRTOS task\r\n\r\n",
-	task_stats_command, /* The function to run. */
-	0					/* No parameters are expected. */
-};
 
 
 /*******************************************************************************
  * "ps" command
  * Returns task run-time status
  */
-static portBASE_TYPE ps_command(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+static portBASE_TYPE ps_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
 	const int8_t *const stats_table_header = (int8_t *) "Task        Abs Time     % Time\r\n*********************************\r\n";
 
 	configASSERT(pcWriteBuffer);
@@ -214,46 +192,182 @@ static portBASE_TYPE ps_command(char *pcWriteBuffer, size_t xWriteBufferLen, con
 	return pdFALSE;
 }
 
-static const CLI_Command_Definition_t ps_command_definition = {
-	"ps",					/* The command string to type. */
-	"ps:\r\n Displays a table showing how much processing time each FreeRTOS task has used\r\n\r\n",
-	ps_command,				/* The function to run. */
-	0						/* No parameters are expected. */
-};
+
+/*******************************************************************************
+ * "" command
+ * Returns 
+ */
+static portBASE_TYPE set_acc_en_cmd         (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	return pdFALSE;	
+}
 
 
 /*******************************************************************************
- * "mem" command
- * Returns memory status
+ * "" command
+ * Returns 
  */
-static portBASE_TYPE mem_command(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
-	configASSERT(pcWriteBuffer);
-
-	/* Return current Heap memory status */
-	sprintf(pcWriteBuffer, "Free heep size: %d bytes\r\n", xPortGetFreeHeapSize());
-
+static portBASE_TYPE set_cv_en_cmd          (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
 	return pdFALSE;
 }
 
-static const CLI_Command_Definition_t mem_command_definition = {
-	"mem",					/* The command string to type. */
-	"mem:\r\n Displays memory usage\r\n\r\n",
-	mem_command,				/* The function to run. */
-	0						/* No parameters are expected. */
-};
+
+/*******************************************************************************
+ * "" command
+ * Returns 
+ */
+static portBASE_TYPE set_comp_en_cmd        (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	return pdFALSE;
+}
 
 
 /*******************************************************************************
- * Registers all CLI commands
+ * "" command
+ * Returns 
  */
-void vRegisterCLICommands(void) {
-	/* Register all the command line commands defined immediately above. */
-	FreeRTOS_CLIRegisterCommand(&get_version_command_definition);
-	FreeRTOS_CLIRegisterCommand(&get_cli_ping_command_definition);
-	FreeRTOS_CLIRegisterCommand(&set_fpga_led_command_definition);
-	FreeRTOS_CLIRegisterCommand(&set_red_led_command_definition);
-	
-	FreeRTOS_CLIRegisterCommand(&task_stats_command_definition);
-	FreeRTOS_CLIRegisterCommand(&ps_command_definition);
-	FreeRTOS_CLIRegisterCommand(&mem_command_definition);
+static portBASE_TYPE set_press_en_cmd       (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "" command
+ * Returns 
+ */
+static portBASE_TYPE set_pwr_en_cmd         (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "" command
+ * Returns 
+ */
+static portBASE_TYPE set_rx_deadzone_cmd    (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "" command
+ * Returns 
+ */
+static portBASE_TYPE set_rx_en_cmd          (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "" command
+ * Returns 
+ */
+static portBASE_TYPE set_rx_gain_cmd        (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "" command
+ * Returns 
+ */
+static portBASE_TYPE set_rx_gain_offset_cmd (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "" command
+ * Returns 
+ */
+static portBASE_TYPE set_rx_gain_slope_cmd  (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "" command
+ * Returns 
+ */
+static portBASE_TYPE set_rx_range_cmd       (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "" command
+ * Returns 
+ */
+static portBASE_TYPE set_rx_rec_en_cmd      (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "" command
+ * Returns 
+ */
+static portBASE_TYPE set_sens_rec_en_cmd    (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "" command
+ * Returns 
+ */
+static portBASE_TYPE set_temp_en_cmd        (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "" command
+ * Returns 
+ */
+static portBASE_TYPE set_tx_en_cmd          (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "" command
+ * Returns 
+ */
+static portBASE_TYPE set_tx_mod_cmd         (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "" command
+ * Returns 
+ */
+static portBASE_TYPE set_tx_pow_cmd         (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "" command
+ * Returns 
+ */
+static portBASE_TYPE set_tx_pulse_len_cmd   (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "Task Status" command
+ */
+static portBASE_TYPE task_stats_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	const int8_t *const task_table_header = (int8_t *) "Task  State Pri Stack #\r\n*************************************\r\n";
+
+	configASSERT(pcWriteBuffer);
+
+	/* Generate a table of task stats. */
+	strcpy((char *) pcWriteBuffer, (char *) task_table_header);
+	vTaskList(pcWriteBuffer + strlen((char *) task_table_header));
+
+	/* There is no more data to return after this single string, so return
+	pdFALSE. */
+	return pdFALSE;
 }

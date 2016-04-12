@@ -118,9 +118,7 @@ static void usb_cdc_command_console_task(void *pvParameters) {
 	/* Just to remove compiler warnings. */
 	(void) pvParameters;
 
-	/* Obtain the address of the output buffer.  Note there is no mutual
-	exclusion on this buffer as it is assumed only one command console
-	interface will be used at any one time. */
+	/* Obtain the address of the output buffer */
 	output_string = (uint8_t *) FreeRTOS_CLIGetOutputBuffer();
 
 	for (;;) {

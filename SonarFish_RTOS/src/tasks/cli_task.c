@@ -22,6 +22,7 @@
 #include "cli_task.h"
 #include "task_queues.h"
 #include "CLI-commands.h"
+#include "packets.h"
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFINES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -59,24 +60,50 @@ void create_cli_task(void) {
  * Reads Commands from RS485 UART, and processes them
  */
 static void cli_task(void *pvParameters) {
-	uint8_t received_char, input_index = 0, *output_string;
-	static int8_t input_string[MAX_CLI_INPUT_SIZE];
+	uint8_t *output_string;
+	uint8_t *input_string;
+	uint8_t *packet_ptr;
+	int string_len;
 	portBASE_TYPE returned_value;
 
-	
-	for (;;) {
-		/* Get the string to write to the UART from the command interpreter. */
-		do {
-			/* Get the string to write to the UART from the command
-			interpreter. */
-			returned_value = FreeRTOS_CLIProcessCommand(
-					(char *)input_string,
-					(char *)output_string,
-					configCOMMAND_INT_MAX_OUTPUT_SIZE);
+	/* Obtain the address of the output buffer */
+	output_string = (uint8_t *) FreeRTOS_CLIGetOutputBuffer();
 
-			/* Transmit the generated string. */
-//			udi_cdc_multi_write_buf(CLI_USB_PORT, (void *) output_string, strlen(
-//					(char *) output_string));
-		} while (returned_value != pdFALSE);
+	/* Loop forever */
+	for (;;) {
+		/* Check if there are any pending commands */
+		if (xQueueReceive(command_queue, &input_string, (TickType_t)0) == pdTRUE) {
+
+			do {
+				/* Get the response string from the command interpreter */
+				returned_value = FreeRTOS_CLIProcessCommand(
+						(char *)input_string,
+						(char *)output_string,
+						configCOMMAND_INT_MAX_OUTPUT_SIZE);
+
+				/* Get response string length */
+				string_len = strlen(output_string); 
+
+				/* Allocate output buffer */
+				packet_ptr = (uint8_t*)pvPortMalloc(string_len + PACKET_HEADER_SIZE + PACKET_FOOTER_SIZE);
+
+				((struct packet_header_t*)packet_ptr)->start_sync[0] = START_SYNC_BYTE0;
+				((struct packet_header_t*)packet_ptr)->start_sync[1] = START_SYNC_BYTE1;
+				((struct packet_header_t*)packet_ptr)->length = string_len + PACKET_HEADER_SIZE + PACKET_FOOTER_SIZE;
+				memcpy(((struct packet_header_t*)packet_ptr)->data, output_string, string_len);
+				packet_ptr[((struct packet_header_t*)packet_ptr)->length - 2] = END_SYNC_BYTE0;
+				packet_ptr[((struct packet_header_t*)packet_ptr)->length - 1] = END_SYNC_BYTE1;
+
+				/* Transmit the generated string. */
+				if (xQueueSend(data_channel_queue, &packet_ptr, portMAX_DELAY) != pdPASS) {
+					printf("#WARNING: Failed to put response packet on the reponse_queue\n");
+					vPortFree(output_string);
+					break;
+				}				
+			} while (returned_value != pdFALSE);
+		
+		/* Release the command string buffer */
+		vPortFree(input_string);
+		}
 	}
 }

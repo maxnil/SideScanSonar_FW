@@ -1,5 +1,6 @@
 /*
  * CLI-commands.c
+ * SonarCom CLI Commands
  *
  * Created: 2016-03-01 19:21:04
  *  Author: Max
@@ -32,40 +33,285 @@
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFINES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#define COMMAND_FUNCTION_ARGS char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString
+/* Macro to make the lines shorter */
+#define CLI_DEF_T static const CLI_Command_Definition_t
 
 //~~~~~~~~~~~~~~~~~~~~~~~~ LOCAL FUNCTION DECLARATIONS ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-static portBASE_TYPE get_version_command(COMMAND_FUNCTION_ARGS);
+static portBASE_TYPE get_date_cmd      (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE get_time_cmd      (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE get_sonar_pwr_cmd (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE get_version_cmd   (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE mem_cmd           (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE ping_cmd          (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE ps_cmd            (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_date_cmd      (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_sonar_pwr_cmd (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE set_time_cmd      (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE sonar_cmd         (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
+static portBASE_TYPE task_stats_cmd    (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString);
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ LOCAL VARIABLES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-static const CLI_Command_Definition_t get_version_command_definition = {
-	"get_version",
-	"get_version:\r\n  Software version\r\n\r\n",
-	get_version_command,
-	0};
+/* CLI command definitions */
+CLI_DEF_T get_date_cmd_def      = {"get_date",      "get_date\r\n",                    get_date_cmd,      0};
+CLI_DEF_T get_sonar_pwr_cmd_def = {"get_sonar_pwr", "get_sonar_pwr\r\n",               get_sonar_pwr_cmd, 0};
+CLI_DEF_T get_time_cmd_def      = {"get_time",      "get_time\r\n",                    get_time_cmd,      0};
+CLI_DEF_T get_version_cmd_def   = {"get_version",   "get_version\r\n",                 get_version_cmd,   0};
+CLI_DEF_T mem_cmd_def           = {"mem",           "mem\r\n",                         mem_cmd,           0};
+CLI_DEF_T ping_cmd_def          = {"ping",          "ping\r\n",                        ping_cmd,          0};
+CLI_DEF_T ps_cmd_def            = {"ps",            "ps\r\n",                          ps_cmd,            0};
+CLI_DEF_T set_date_cmd_def      = {"set_date",      "set_date year-month-day\r\n",     set_date_cmd,      1};
+CLI_DEF_T set_sonar_pwr_cmd_def = {"set_sonar_pwr", "set_sonar_pwr 0|1\r\n",           set_sonar_pwr_cmd, 1};
+CLI_DEF_T set_time_cmd_def      = {"set_time",      "set_time hour:minute:second\r\n", set_time_cmd,      1};
+CLI_DEF_T sonar_cmd_def         = {"sonar",         "sonar \'cmd arg\'\r\n",           sonar_cmd,        -1};
+CLI_DEF_T task_stats_cmd_def    = {"task-stats",    "task-stats\r\n",                  task_stats_cmd,    0};
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/*******************************************************************************
+ * Registers all CLI commands
+ */
+void vRegisterCLICommands(void) {
+	FreeRTOS_CLIRegisterCommand(&get_date_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&get_sonar_pwr_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&get_time_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&get_version_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&mem_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&ping_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&ps_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_date_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_sonar_pwr_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&set_time_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&sonar_cmd_def);
+	FreeRTOS_CLIRegisterCommand(&task_stats_cmd_def);
+}
+
+
+/*******************************************************************************
+ * "Get Date" command
+ * Returns RTC Date
+ */
+static portBASE_TYPE get_date_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	uint32_t year, month, day;
+	
+	configASSERT(pcWriteBuffer);
+
+	/* Get RTC date */
+	rtcc_get_date(&year, &month, &day);
+
+	/* Return date */	
+	sprintf(pcWriteBuffer, "%d-%.2d-%.2d\r\n", (int)year, (int)month, (int)day);
+
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "Get Sonar Power" command
+ */
+static portBASE_TYPE get_sonar_pwr_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	configASSERT(pcWriteBuffer);
+	
+	/* Return current Sonar Power status */
+	sprintf(pcWriteBuffer, "%d\r\n", sonar_power_status() ? 1 : 0);
+			
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "Get Time" command
+ * Returns RTC time
+ */
+static portBASE_TYPE get_time_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	uint32_t hour, minute, second;
+
+	configASSERT(pcWriteBuffer);
+
+	/* Get time from RTC */
+	rtcc_get_time(&hour, &minute, &second);
+
+	/* Return RTC time */
+	sprintf(pcWriteBuffer, "%d:%.2d:%.2d\r\n", (int)hour, (int)minute, (int)second);
+
+	return pdFALSE;
+}
+
 
 /*******************************************************************************
  * "Get Version" command
  * Returns SW version
  */
-static portBASE_TYPE get_version_command(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+static portBASE_TYPE get_version_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
 	configASSERT(pcWriteBuffer);
 
-	sprintf(pcWriteBuffer, "%s (%s, %s)\n", SW_VERSION, __DATE__, __TIME__);
+	sprintf(pcWriteBuffer, "SonarCom %s (%s, %s)\n", SW_VERSION, __DATE__, __TIME__);
 
 	return pdFALSE;
 }
+
+
+/*******************************************************************************
+ * "mem" command
+ * Returns memory status
+ */
+static portBASE_TYPE mem_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	configASSERT(pcWriteBuffer);
+
+	/* Return current Heap memory status */
+	sprintf(pcWriteBuffer, "Free heep size: %d bytes\r\n", xPortGetFreeHeapSize());
+
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "ping" command
+ * Returns 'pong1' on CLI interface and 'pong2' on data channel
+ */
+static portBASE_TYPE ping_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	const uint8_t pong_packet[14] = {START_SYNC_BYTE0, START_SYNC_BYTE1, 0x0E, 0x00, PONG_PACKET, 'p', 'o', 'n', 'g', '2', '\n', 0x00, END_SYNC_BYTE0, END_SYNC_BYTE1};
+	uint8_t *packet_ptr;
+
+	configASSERT(pcWriteBuffer);
+
+	/* Send "ping" back on CLI USB CDC interface */
+	sprintf(pcWriteBuffer, "pong1\n");
+	
+	/* Allocate Pong packet buffer */
+	packet_ptr = (uint8_t*)pvPortMalloc(16);
+
+	/* Copy constant Pong packet */
+	memcpy(packet_ptr, pong_packet, 14);
+
+	/* Put Pong packet on the USB CDC data queue */
+	if (!xQueueSend(data_channel_queue, &packet_ptr, portMAX_DELAY)) {
+		printf("#WARNING: Failed to send Ping packet to data_queue\n");
+		vPortFree(packet_ptr);
+	}
+
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "ps" command
+ * Returns task run-time status
+ */
+static portBASE_TYPE ps_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	const int8_t *const stats_table_header = (int8_t *) "Task        Abs Time     % Time\r\n*********************************\r\n";
+
+	configASSERT(pcWriteBuffer);
+
+	/* Generate a table of task stats. */
+	strcpy((char *) pcWriteBuffer, (char *)stats_table_header);
+	vTaskGetRunTimeStats(pcWriteBuffer + strlen((char *)stats_table_header));
+
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "Set Date" command
+ * Sets RTC date
+ */
+static portBASE_TYPE set_date_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	const char *parameter_string;
+	portBASE_TYPE parameter_string_length;
+	int year, month, day;
+	int status = 0;
+
+	configASSERT(pcWriteBuffer);
+	
+	/* Obtain the parameter string. */
+	parameter_string = FreeRTOS_CLIGetParameter(pcCommandString, 1,	&parameter_string_length);
+	
+	/* Check that parameter length is correct */
+	if (parameter_string_length != 8) {
+		sprintf(pcWriteBuffer, "ARG ERROR\r\n");
+		return pdFALSE;
+	}
+	
+	/* Get date parameters */
+	sscanf(parameter_string, "%d-%d-%d", &year, &month, &day);
+
+	/* Set date in RTC */
+	status = rtcc_set_date(year, month, day);
+
+	/* Return RTC status */
+	sprintf(pcWriteBuffer, "%d\r\n", (status == 0) ? 1 : 0);
+
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "Set Sonar Power Enable" command
+ */
+static portBASE_TYPE set_sonar_pwr_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	const char *parameter_string;	
+	portBASE_TYPE parameter_string_length;
+
+	configASSERT(pcWriteBuffer);
+	
+	/* Obtain the parameter string. */
+	parameter_string = FreeRTOS_CLIGetParameter(pcCommandString, 1, &parameter_string_length);
+	
+	/* Check parameter */
+	if (parameter_string != NULL && parameter_string[0] == '0') {
+		sonar_power_enable(false);
+	} else if (parameter_string != NULL && parameter_string[0] == '1') {
+		sonar_power_enable(true);
+	}
+
+	/* Return current Sonar Power status */
+	sprintf(pcWriteBuffer, "%d\r\n", sonar_power_status() ? 1 : 0);
+			
+	return pdFALSE;
+}
+
+
+/*******************************************************************************
+ * "Set Time" command
+ * Sets RTC time
+ */
+static portBASE_TYPE set_time_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	int hour, minute, second;
+	const char *parameter_string;
+	portBASE_TYPE parameter_string_length;
+	int status;
+	
+	configASSERT(pcWriteBuffer);
+	
+	/* Obtain the parameter string. */
+	parameter_string = FreeRTOS_CLIGetParameter(pcCommandString, 1, &parameter_string_length);
+	
+	/* Check that parameter length is correct */
+	if (parameter_string_length != 8) {
+		sprintf(pcWriteBuffer, "ARG ERROR\r\n");
+		return pdFALSE;
+	}
+
+	/* Get time parameters */
+	sscanf(parameter_string, "%d:%d:%d", &hour, &minute, &second);
+
+	/* Set time in RTC */
+	status = rtcc_set_time(hour, minute, second);
+	
+	/* Return RTC status */
+	sprintf(pcWriteBuffer, "%d\r\n", (status == 0) ? 1 : 0);
+
+	return pdFALSE;
+}
+
 
 /*******************************************************************************
  * "Sonar" command
  * Sends command to SonarFish
  * Returns response from SonarFish
  */
-static portBASE_TYPE sonar_command(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+static portBASE_TYPE sonar_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
 	const char *parameter_string;
 	portBASE_TYPE parameter_string_length;
 	int parameter_len;
@@ -125,221 +371,11 @@ static portBASE_TYPE sonar_command(char *pcWriteBuffer, size_t xWriteBufferLen, 
 	return pdFALSE;
 }
 
-static const CLI_Command_Definition_t sonar_command_definition = {
-	"sonar",
-	"sonar \'cmd arg\' :\r\n  Send command 'x' with argument 'y' to SonarFish\r\n\r\n",
-	sonar_command,
-	-1
-};
-
-
-/*******************************************************************************
- * "ping" command
- * Returns 'pong1' on CLI interface and 'pong2' on data channel
- */
-static portBASE_TYPE ping_command(char *pcWriteBuffer, size_t xWriteBufferLen,	const char *pcCommandString) {
-	const uint8_t pong_packet[14] = {START_SYNC_BYTE0, START_SYNC_BYTE1, 0x0E, 0x00, PONG_PACKET, 'p', 'o', 'n', 'g', '2', '\n', 0x00, END_SYNC_BYTE0, END_SYNC_BYTE1};
-	uint8_t *packet_ptr;
-
-	configASSERT(pcWriteBuffer);
-
-	/* Send "ping" back on CLI USB CDC interface */
-	sprintf(pcWriteBuffer, "pong1\n");
-	
-	/* Allocate Pong packet buffer */
-	packet_ptr = (uint8_t*)pvPortMalloc(16);
-
-	/* Copy constant Pong packet */
-	memcpy(packet_ptr, pong_packet, 14);
-
-	/* Put Pong packet on the USB CDC data queue */
-	if (!xQueueSend(data_channel_queue, &packet_ptr, portMAX_DELAY)) {
-		printf("#WARNING: Failed to send Ping packet to data_queue\n");
-		vPortFree(packet_ptr);
-	}
-
-	return pdFALSE;
-}
-
-static const CLI_Command_Definition_t get_cli_ping_command_definition = {
-	"ping",
-	"ping:\r\n  Returns \'pong\' on both USB CDC interfaces\r\n\r\n",
-	ping_command,
-	0
-};
-
-
-/*******************************************************************************
- * "Get Time" command
- * Returns RTC time
- */
-static portBASE_TYPE get_time_command(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
-	uint32_t hour, minute, second;
-
-	configASSERT(pcWriteBuffer);
-
-	/* Get time from RTC */
-	rtcc_get_time(&hour, &minute, &second);
-
-	/* Return RTC time */
-	sprintf(pcWriteBuffer, "%d:%.2d:%.2d\r\n", (int)hour, (int)minute, (int)second);
-
-	return pdFALSE;
-}
-
-static const CLI_Command_Definition_t get_time_command_definition = {
-	"get_time",
-	"get_time:\r\n  Displays the current time\r\n\r\n",
-	get_time_command,
-	0
-};
-
-
-/*******************************************************************************
- * "Set Time" command
- * Sets RTC time
- */
-static portBASE_TYPE set_time_command(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
-	int hour, minute, second;
-	const char *parameter_string;
-	portBASE_TYPE parameter_string_length;
-	int status;
-	
-	configASSERT(pcWriteBuffer);
-	
-	/* Obtain the parameter string. */
-	parameter_string = FreeRTOS_CLIGetParameter(pcCommandString, 1, &parameter_string_length);
-	
-	/* Check that parameter length is correct */
-	if (parameter_string_length != 8) {
-		sprintf(pcWriteBuffer, "ARG ERROR\r\n");
-		return pdFALSE;
-	}
-
-	/* Get time parameters */
-	sscanf(parameter_string, "%d:%d:%d", &hour, &minute, &second);
-
-	/* Set time in RTC */
-	status = rtcc_set_time(hour, minute, second);
-	
-	/* Return RTC status */
-	sprintf(pcWriteBuffer, "%d\r\n", (status == 0) ? 1 : 0);
-
-	return pdFALSE;
-}
-
-static const CLI_Command_Definition_t set_time_command_definition = {
-	"set_time",
-	"set_time hour:minute:second:\r\n  Sets the current time\r\n\r\n",
-	set_time_command,
-	1						/* 1 parameter are expected. */
-};
-
-
-/*******************************************************************************
- * "Get Date" command
- * Returns RTC Date
- */
-static portBASE_TYPE get_date_command(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
-	uint32_t year, month, day;
-	
-	configASSERT(pcWriteBuffer);
-
-	/* Get RTC date */
-	rtcc_get_date(&year, &month, &day);
-
-	/* Return date */	
-	sprintf(pcWriteBuffer, "%d-%.2d-%.2d\r\n", (int)year, (int)month, (int)day);
-
-	return pdFALSE;
-}
-
-static const CLI_Command_Definition_t get_date_command_definition = {
-	"get_date",
-	"get_date:\r\n  Displays the current date\r\n\r\n",
-	get_date_command,
-	0
-};
-
-
-/*******************************************************************************
- * "Set Date" command
- * Sets RTC date
- */
-static portBASE_TYPE set_date_command(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
-	const char *parameter_string;
-	portBASE_TYPE parameter_string_length;
-	int year, month, day;
-	int status = 0;
-
-	configASSERT(pcWriteBuffer);
-	
-	/* Obtain the parameter string. */
-	parameter_string = FreeRTOS_CLIGetParameter(pcCommandString, 1,	&parameter_string_length);
-	
-	/* Check that parameter length is correct */
-	if (parameter_string_length != 8) {
-		sprintf(pcWriteBuffer, "ARG ERROR\r\n");
-		return pdFALSE;
-	}
-	
-	/* Get date parameters */
-	sscanf(parameter_string, "%d-%d-%d", &year, &month, &day);
-
-	/* Set date in RTC */
-	status = rtcc_set_date(year, month, day);
-
-	/* Return RTC status */
-	sprintf(pcWriteBuffer, "%d\r\n", (status == 0) ? 1 : 0);
-
-	return pdFALSE;
-}
-
-static const CLI_Command_Definition_t set_date_command_definition = {
-	"set_date",
-	"set_date year-month-day:\r\n  Sets the current date\r\n\r\n",
-	set_date_command,
-	1						/* 1 parameter are expected. */
-};
-
-
-/*******************************************************************************
- * "Set Sonar Power Enable" command
- */
-static portBASE_TYPE set_sonar_pwr_command(char *pcWriteBuffer, size_t xWriteBufferLen,	const char *pcCommandString) {
-	const char *parameter_string;	
-	portBASE_TYPE parameter_string_length;
-
-	configASSERT(pcWriteBuffer);
-	
-	/* Obtain the parameter string. */
-	parameter_string = FreeRTOS_CLIGetParameter(pcCommandString, 1, &parameter_string_length);
-	
-	/* Check parameter */
-	if (parameter_string != NULL && parameter_string[0] == '0') {
-		sonar_power_enable(false);
-	} else if (parameter_string != NULL && parameter_string[0] == '1') {
-		sonar_power_enable(true);
-	}
-
-	/* Return current Sonar Power status */
-	sprintf(pcWriteBuffer, "%d\r\n", sonar_power_status() ? 1 : 0);
-			
-	return pdFALSE;
-}
-
-static const CLI_Command_Definition_t set_sonar_pwr_command_definition = {
-	"set_sonar_pwr",
-	"set_sonar_pwr 0|1|?:\r\n  0 = off, 1 = on, ? = check status of the Sonar Fish power\r\n\r\n",
-	set_sonar_pwr_command,
-	1
-};
-
 
 /*******************************************************************************
  * "Task Status" command
  */
-static portBASE_TYPE task_stats_command(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+static portBASE_TYPE task_stats_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
 	const int8_t *const task_table_header = (int8_t *) "Task  State Pri Stack #\r\n*************************************\r\n";
 
 	configASSERT(pcWriteBuffer);
@@ -351,76 +387,4 @@ static portBASE_TYPE task_stats_command(char *pcWriteBuffer, size_t xWriteBuffer
 	/* There is no more data to return after this single string, so return
 	pdFALSE. */
 	return pdFALSE;
-}
-
-static const CLI_Command_Definition_t task_stats_command_definition = {
-	"task-stats",
-	"task-stats:\r\n Displays a table showing the state of each FreeRTOS task\r\n\r\n",
-	task_stats_command,
-	0
-};
-
-
-/*******************************************************************************
- * "ps" command
- * Returns task run-time status
- */
-static portBASE_TYPE ps_command(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
-	const int8_t *const stats_table_header = (int8_t *) "Task        Abs Time     % Time\r\n*********************************\r\n";
-
-	configASSERT(pcWriteBuffer);
-
-	/* Generate a table of task stats. */
-	strcpy((char *) pcWriteBuffer, (char *)stats_table_header);
-	vTaskGetRunTimeStats(pcWriteBuffer + strlen((char *)stats_table_header));
-
-	return pdFALSE;
-}
-
-static const CLI_Command_Definition_t ps_command_definition = {
-	"ps",
-	"ps:\r\n Displays a table showing how much processing time each FreeRTOS task has used\r\n\r\n",
-	ps_command,
-	0
-};
-
-
-/*******************************************************************************
- * "mem" command
- * Returns memory status
- */
-static portBASE_TYPE mem_command(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
-	configASSERT(pcWriteBuffer);
-
-	/* Return current Heap memory status */
-	sprintf(pcWriteBuffer, "Free heep size: %d bytes\r\n", xPortGetFreeHeapSize());
-
-	return pdFALSE;
-}
-
-static const CLI_Command_Definition_t mem_command_definition = {
-	"mem",
-	"mem:\r\n Displays memory usage\r\n\r\n",
-	mem_command,
-	0
-};
-
-
-/*******************************************************************************
- * Registers all CLI commands
- */
-void vRegisterCLICommands(void) {
-	/* Register all the command line commands defined immediately above. */
-	FreeRTOS_CLIRegisterCommand(&sonar_command_definition);
-	FreeRTOS_CLIRegisterCommand(&get_version_command_definition);
-	FreeRTOS_CLIRegisterCommand(&get_cli_ping_command_definition);
-	FreeRTOS_CLIRegisterCommand(&get_time_command_definition);
-	FreeRTOS_CLIRegisterCommand(&set_time_command_definition);
-	FreeRTOS_CLIRegisterCommand(&get_date_command_definition);
-	FreeRTOS_CLIRegisterCommand(&set_date_command_definition);
-	FreeRTOS_CLIRegisterCommand(&set_sonar_pwr_command_definition);
-	
-	FreeRTOS_CLIRegisterCommand(&task_stats_command_definition);
-	FreeRTOS_CLIRegisterCommand(&ps_command_definition);
-	FreeRTOS_CLIRegisterCommand(&mem_command_definition);
 }
