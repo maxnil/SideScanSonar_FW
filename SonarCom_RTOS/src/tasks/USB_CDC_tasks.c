@@ -191,8 +191,7 @@ static void usb_cdc_command_console_task(void *pvParameters) {
  * Sends all data that is in the 'data_channel_queue' to the USB Data Channel
  */
 static void usb_cdc_data_channel_task(void *pvParameters) {
-	uint8_t *packet_ptr;
-	int packet_len;
+	struct packet_t *packet_ptr;
 
 	/* Just to remove compiler warnings. */
 	(void) pvParameters;
@@ -201,13 +200,11 @@ static void usb_cdc_data_channel_task(void *pvParameters) {
 	for (;;) {
 		/* Wait for new data. */
 		if (xQueueReceive(data_channel_queue, &packet_ptr, portMAX_DELAY) == pdPASS) {
-//			printf("Data_packet received: %s", &((struct packet_header_t*)packet_ptr)->data);
-			/* Get packet length */
-			packet_len = ((struct packet_header_t*)packet_ptr)->length;
+//			printf("Data_packet received: %s", &(packet_ptr->data);
 
 			/* Get hold of the USB port, then send packet */
 			xSemaphoreTake(access_mutex, portMAX_DELAY);
-			udi_cdc_multi_write_buf(SONAR_USB_PORT, packet_ptr, packet_len);
+			udi_cdc_multi_write_buf(SONAR_USB_PORT, packet_ptr, packet_ptr->length);
 			xSemaphoreGive(access_mutex);
 
 			/* Release buffer */

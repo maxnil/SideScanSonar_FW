@@ -16,9 +16,9 @@ void sfish_analog_init(void);
 void sfish_debug_console_init(void);
 
 /* Get Chip temperature */
-int32_t get_chip_temperature(void);
+int get_chip_temperature(void);
 
 /* Get analog input value */
-int32_t get_analog_input(int adc_nr);
+int get_analog_input(int adc_nr);
 
 #endif /* SFISH_INIT_H_ */

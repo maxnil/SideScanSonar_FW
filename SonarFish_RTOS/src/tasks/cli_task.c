@@ -31,6 +31,15 @@
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ LOCAL VARIABLES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+/* End of response packet (can't be declared as const since the PDC can't read from program flash */
+struct packet_t end_reponse_packet = {
+	.start_sync[0] = START_SYNC_BYTE0,
+	.start_sync[1] = START_SYNC_BYTE1,
+	.length = 6,
+	.type = END_RESPONSE_PACKET,
+	.data[0] = 0x00		// At least one data bytes needs to be sent
+};
+
 //~~~~~~~~~~~~~~~~~~~~~~~~ LOCAL FUNCTION DECLARATIONS ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 static void cli_task(void *pvParameters);
@@ -60,50 +69,63 @@ void create_cli_task(void) {
  * Reads Commands from RS485 UART, and processes them
  */
 static void cli_task(void *pvParameters) {
-	uint8_t *output_string;
-	uint8_t *input_string;
-	uint8_t *packet_ptr;
+	char *output_string;
+	char *input_string;
+	struct packet_t *cmd_packet_ptr;
+	struct packet_t *resp_packet_ptr;
 	int string_len;
 	portBASE_TYPE returned_value;
 
 	/* Obtain the address of the output buffer */
-	output_string = (uint8_t *) FreeRTOS_CLIGetOutputBuffer();
+	output_string = FreeRTOS_CLIGetOutputBuffer();
 
 	/* Loop forever */
 	for (;;) {
 		/* Check if there are any pending commands */
-		if (xQueueReceive(command_queue, &input_string, (TickType_t)0) == pdTRUE) {
-
+		if (xQueueReceive(command_queue, &cmd_packet_ptr, (TickType_t)0) == pdTRUE) {
+			input_string = (char*)cmd_packet_ptr->data;
+			printf("CLI Task: Command string = %s\n", input_string);
 			do {
 				/* Get the response string from the command interpreter */
 				returned_value = FreeRTOS_CLIProcessCommand(
-						(char *)input_string,
-						(char *)output_string,
+						input_string,
+						output_string,
 						configCOMMAND_INT_MAX_OUTPUT_SIZE);
 
 				/* Get response string length */
-				string_len = strlen(output_string); 
+				string_len = strlen(output_string) + 1;		// Add 1 to get the 'end of string'
 
-				/* Allocate output buffer */
-				packet_ptr = (uint8_t*)pvPortMalloc(string_len + PACKET_HEADER_SIZE + PACKET_FOOTER_SIZE);
+				/* Allocate packet buffer */
+				resp_packet_ptr = (struct packet_t*)pvPortMalloc(PACKET_HEADER_SIZE + string_len);
 
-				((struct packet_header_t*)packet_ptr)->start_sync[0] = START_SYNC_BYTE0;
-				((struct packet_header_t*)packet_ptr)->start_sync[1] = START_SYNC_BYTE1;
-				((struct packet_header_t*)packet_ptr)->length = string_len + PACKET_HEADER_SIZE + PACKET_FOOTER_SIZE;
-				memcpy(((struct packet_header_t*)packet_ptr)->data, output_string, string_len);
-				packet_ptr[((struct packet_header_t*)packet_ptr)->length - 2] = END_SYNC_BYTE0;
-				packet_ptr[((struct packet_header_t*)packet_ptr)->length - 1] = END_SYNC_BYTE1;
+				resp_packet_ptr->start_sync[0] = START_SYNC_BYTE0;
+				resp_packet_ptr->start_sync[1] = START_SYNC_BYTE1;
+				resp_packet_ptr->length = PACKET_HEADER_SIZE + string_len;
+				resp_packet_ptr->type = RESPONSE_PACKET;
+				memcpy(resp_packet_ptr->data, output_string, string_len);
 
 				/* Transmit the generated string. */
-				if (xQueueSend(data_channel_queue, &packet_ptr, portMAX_DELAY) != pdPASS) {
+				if (xQueueSend(data_channel_queue, &resp_packet_ptr, portMAX_DELAY) != pdPASS) {
 					printf("#WARNING: Failed to put response packet on the reponse_queue\n");
-					vPortFree(output_string);
+					vPortFree(resp_packet_ptr);
 					break;
 				}				
 			} while (returned_value != pdFALSE);
-		
-		/* Release the command string buffer */
-		vPortFree(input_string);
+
+			/* Allocate end of response packet buffer */
+			resp_packet_ptr = (struct packet_t*)pvPortMalloc(end_reponse_packet.length);
+
+			memcpy(resp_packet_ptr, (uint8_t*)&end_reponse_packet, end_reponse_packet.length);
+
+			/* Transmit the generated string. */
+			if (xQueueSend(data_channel_queue, &resp_packet_ptr, portMAX_DELAY) != pdPASS) {
+				printf("#WARNING: Failed to put response packet on the reponse_queue\n");
+				vPortFree(resp_packet_ptr);
+				break;
+			}
+			
+			/* Release the command string buffer */
+			vPortFree(cmd_packet_ptr);
 		}
 	}
 }

@@ -30,13 +30,13 @@ void LED_Toggle(uint32_t led_gpio);
 
 #if 0
 /* Turns off the specified LEDs */
-#define LED_Off(led)     ioport_set_pin_level(led##_GPIO, led##_INACTIVE_LEVEL)
+#define LED_Off(led)     ioport_set_pin_level(led##, led##_INACTIVE_LEVEL)
 
 /* Turns on the specified LEDs */
-#define LED_On(led)      ioport_set_pin_level(led##_GPIO, led##_ACTIVE_LEVEL)
+#define LED_On(led)      ioport_set_pin_level(led##, led##_ACTIVE_LEVEL)
 
 /* Toggles the specified LEDs */
-#define LED_Toggle(led)  ioport_toggle_pin_level(led##_GPIO)
+#define LED_Toggle(led)  ioport_toggle_pin_level(led##)
 #endif
 
 #endif /* LED_H_ */

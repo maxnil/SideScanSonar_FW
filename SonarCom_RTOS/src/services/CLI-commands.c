@@ -67,6 +67,15 @@ CLI_DEF_T set_time_cmd_def      = {"set_time",      "set_time hour:minute:second
 CLI_DEF_T sonar_cmd_def         = {"sonar",         "sonar \'cmd arg\'\r\n",           sonar_cmd,        -1};
 CLI_DEF_T task_stats_cmd_def    = {"task-stats",    "task-stats\r\n",                  task_stats_cmd,    0};
 
+/* Pong packet (can't be declared as const since the PDC can't read from program flash */
+struct packet_t pong_packet = {
+	.start_sync[0] = START_SYNC_BYTE0,
+	.start_sync[1] = START_SYNC_BYTE1,
+	.length = 12,
+	.type = PONG_PACKET,
+	.data[7] = 'p', 'o', 'n', 'g', '2', '\n', 0x00
+};
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /*******************************************************************************
@@ -171,19 +180,18 @@ static portBASE_TYPE mem_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const 
  * Returns 'pong1' on CLI interface and 'pong2' on data channel
  */
 static portBASE_TYPE ping_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
-	const uint8_t pong_packet[14] = {START_SYNC_BYTE0, START_SYNC_BYTE1, 0x0E, 0x00, PONG_PACKET, 'p', 'o', 'n', 'g', '2', '\n', 0x00, END_SYNC_BYTE0, END_SYNC_BYTE1};
-	uint8_t *packet_ptr;
-
+	struct packet_t *packet_ptr;
+	
 	configASSERT(pcWriteBuffer);
 
 	/* Send "ping" back on CLI USB CDC interface */
 	sprintf(pcWriteBuffer, "pong1\n");
 	
 	/* Allocate Pong packet buffer */
-	packet_ptr = (uint8_t*)pvPortMalloc(16);
+	packet_ptr = (struct packet_t*)pvPortMalloc(16);
 
 	/* Copy constant Pong packet */
-	memcpy(packet_ptr, pong_packet, 14);
+	memcpy(packet_ptr, &pong_packet, pong_packet.length);
 
 	/* Put Pong packet on the USB CDC data queue */
 	if (!xQueueSend(data_channel_queue, &packet_ptr, portMAX_DELAY)) {
@@ -316,56 +324,62 @@ static portBASE_TYPE sonar_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, cons
 	portBASE_TYPE parameter_string_length;
 	int parameter_len;
 	int packet_len;
-	uint8_t *packet_ptr;
-	uint8_t *data_ptr;
+	struct packet_t *packet_ptr;
+	static int get_response = 0;
 	
 	configASSERT(pcWriteBuffer);
 	
-	/* Obtain the parameter string (don't care about the parameter_string_length */
-	parameter_string = FreeRTOS_CLIGetParameter(pcCommandString, 1, &parameter_string_length);
+	/* First time around we send the command string */
+	if (get_response == 0) {
+		/* Obtain the parameter string (don't care about the parameter_string_length */
+		parameter_string = FreeRTOS_CLIGetParameter(pcCommandString, 1, &parameter_string_length);
 
-	/* Get parameter length (ignore command word) */
-	parameter_len = strlen(parameter_string);
-	packet_len = parameter_len + PACKET_HEADER_SIZE + PACKET_FOOTER_SIZE;
+		/* Get parameter length (ignore command word) */
+		parameter_len = strlen(parameter_string) + 1;			// Add 1 to get the 'end of string' (0x00)
+		packet_len = parameter_len + PACKET_HEADER_SIZE;
 	
-	/* Allocate buffer for SonarFish command */
-	packet_ptr = (uint8_t*)pvPortMalloc(packet_len);
+		/* Allocate buffer for SonarFish command */
+		packet_ptr = (struct packet_t*)pvPortMalloc(packet_len);
 	
-	data_ptr = &((struct packet_header_t*)packet_ptr)->data;
-	
-	/* Copy parameter string to data packet */
-	memcpy(data_ptr, parameter_string, parameter_len);
-	data_ptr += parameter_len;
+		/* Create packet header and footer */
+		packet_ptr->start_sync[0] = START_SYNC_BYTE0;
+		packet_ptr->start_sync[1] = START_SYNC_BYTE1;
+		packet_ptr->length = packet_len;
+		packet_ptr->type = COMMAND_PACKET;
 
-	/* Create packet header and footer */
-	((struct packet_header_t*)packet_ptr)->start_sync[0] = START_SYNC_BYTE0;
-	((struct packet_header_t*)packet_ptr)->start_sync[1] = START_SYNC_BYTE1;
-	((struct packet_header_t*)packet_ptr)->length = packet_len;
-	((struct packet_header_t*)packet_ptr)->type = COMMAND_PACKET;
-	((struct packet_footer_t*)data_ptr)->end_sync[0] = END_SYNC_BYTE0;
-	((struct packet_footer_t*)data_ptr)->end_sync[1] = END_SYNC_BYTE1;
+		/* Copy parameter string to data packet */
+		memcpy(&packet_ptr->data, parameter_string, parameter_len);
 
-//	printf("Sending \"%s\" to SonarFish (len = %d)\n", parameter_string, parameter_len);
+	//	printf("Sending \"%s\" to SonarFish (len = %d)\n", parameter_string, parameter_len);
 
-	/* Put Sonar Command packet on command queue */
-	if (xQueueSend(command_queue, &packet_ptr, portMAX_DELAY)) {
+		/* Put Sonar Command packet on command queue */
+		if (xQueueSend(command_queue, &packet_ptr, portMAX_DELAY)) {
+			get_response = 1;
+		} else {
+			printf("#WARNING: Failed to send SonarFish Command packet to command_queue\n");
+			sprintf(pcWriteBuffer, "Failed to send SonarFish Command packet to command_queue\n");
+			vPortFree(packet_ptr);
+		}
+	}
+
+	if (get_response > 0) {
 		/* Get Sonar response */
 		if (xQueueReceive(response_queue, &packet_ptr, RESPONSE_TIMEOUT_MS/portTICK_PERIOD_MS) == pdTRUE) {
-			//			printf("Receiving response from Sonar: %s\n", packet_ptr);
-			//			packet_len = ((struct packet_header_t*)packet_ptr)->length;
-			//			response_len = packet_len - PACKET_HEADER_SIZE - PACKET_FOOTER_SIZE;
+			printf("Receiving response %d from Sonar: %s\n", get_response, (char*)packet_ptr->data);
 
 			/* Get packet payload */
-			data_ptr = &((struct packet_header_t*)packet_ptr)->data;
-			sprintf(pcWriteBuffer, (char*)data_ptr);
+			sprintf(pcWriteBuffer, (char*)packet_ptr->data);
 			vPortFree(packet_ptr);
+			if (packet_ptr->type == END_RESPONSE_PACKET) {
+				get_response = 0;
+				return pdFALSE;
+			} else {
+				get_response++;
+				return pdPASS;
+			}
 		} else {
 			printf("### Sonar command timeout\n");
 		}
-	} else {
-		printf("#WARNING: Failed to send SonarFish Command packet to command_queue\n");
-		sprintf(pcWriteBuffer, "Failed to send SonarFish Command packet to command_queue\n");
-		vPortFree(packet_ptr);
 	}
 	
 	return pdFALSE;

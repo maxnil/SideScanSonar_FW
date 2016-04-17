@@ -26,7 +26,8 @@
 
 /* Configuration */
 #include "conf_sonarfish.h"
-//#include "conf_twi_master.h"
+#include "conf_twi_master.h"
+#include "conf_spi_master.h"
 
 /* Drivers */
 #include "led.h"
@@ -34,15 +35,16 @@
 /* FreeRTOS */
 #include "FreeRTOS.h"
 #include "freertos_peripheral_control.h"
-//#include "freertos_spi_master.h"
-//#include "freertos_twi_master.h"
+#include "freertos_spi_master.h"
+#include "freertos_twi_master.h"
+#include "freertos_uart_serial.h"
 #include "freertos_usart_serial.h"
 #include "task.h"
 
 /* Tasks */
 #include "cli_task.h"
 #include "rs485_task.h"
-//#include "sensors_task.h"
+#include "sensors_task.h"
 #include "timer_task.h"
 //#include "USB_CDC_tasks.h"
 #include "task_queues.h"
@@ -81,22 +83,27 @@ int main (void) {
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	board_init();
 	
-	LED_On(LED0_GPIO);	// Turn on Red LED
+	LED_On(LED_RED);	// Turn on Red LED
+	LED_Off(LED_BLUE);	// Turn off Blue LED
 
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Initialize interfaces
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-#ifdef CONF_SFISH_ENABLE_ANALOG
-	/* Initialize Analog Front End (ADC) */
-	sfish_analog_init();
-#endif
 
 #ifdef CONF_SFISH_ENABLE_DEBUG_CONSOLE
 	/* Initialize Debug Console */
 	sfish_debug_console_init();
 	printf(DBG_WELCOME_HEADER);			// Print welcome message on Debug UART
 #endif
+
+#ifdef CONF_SFISH_ENABLE_ANALOG
+	/* Initialize Analog Front End (ADC) */
+	sfish_analog_init();
+#endif
+
+	printf("ADC IF 0: %d\n", get_analog_input(0));
+	printf("ADC IF 1: %d\n", get_analog_input(1));
+	printf("Internal temperature: %d\n", get_chip_temperature());
 
 #ifdef CONF_SFISH_ENABLE_FREERTOS_SENSORS_UART
 	/* Initialize FreeRTOS Sensor UART driver */
@@ -107,13 +114,13 @@ int main (void) {
 		.receive_buffer = sensors_rx_buffer,
 		.receive_buffer_size = SENSORS_RX_BUFFER_SIZE,
 		.interrupt_priority = configLIBRARY_LOWEST_INTERRUPT_PRIORITY - 1,
-		.operation_mode = USART_RS232,
+		.operation_mode = UART_RS232,
 		.options_flags = WAIT_RX_COMPLETE | WAIT_TX_COMPLETE
 	};
 
 	sam_uart_opt_t sensors_uart_opt = {
 		.ul_baudrate = CONF_SENSORS_BAUDRATE,
-		.ul_mode = 0 ??
+		.ul_mode = UART_MR_PAR_NO
 	};
 	configASSERT(freertos_uart_serial_init(CONF_SENSORS_UART, &sensors_uart_opt, &sensors_periph_opt));
 #endif
@@ -158,19 +165,20 @@ int main (void) {
 
 	configASSERT(freertos_spi_master_init(CONF_SPI, &spi_periph_opt));
 
-	struct spi_device spi_device_disp = {
-		.id = CONF_SPI_DISP_DEVICE_ID
+	struct spi_device spi_device_ext_0 = {
+		.id = CONF_SPI_EXT_0_DEVICE_ID
 	};
 
-	spi_master_setup_device(CONF_SPI, &spi_device_disp, CONF_SPI_DISP_MODE, CONF_SPI_DISP_BAUDRATE, 0);
-	spi_set_bits_per_transfer(CONF_SPI, spi_device_disp.id, CONF_SPI_DISP_BITS_PER_TRANSFER);
+	spi_master_setup_device(CONF_SPI, &spi_device_ext_0, CONF_SPI_EXT_0_MODE, CONF_SPI_EXT_0_BAUDRATE, 0);
+	spi_set_bits_per_transfer(CONF_SPI, spi_device_ext_0.id, CONF_SPI_EXT_0_BITS_PER_TRANSFER);
 
-	struct spi_device spi_device_ext = {
-		.id = CONF_SPI_EXT_DEVICE_ID
+	struct spi_device spi_device_ext_1 = {
+		.id = CONF_SPI_EXT_1_DEVICE_ID
 	};
 
-	spi_master_setup_device(CONF_SPI, &spi_device_ext, CONF_SPI_EXT_MODE, CONF_SPI_EXT_BAUDRATE, 0);
-	spi_set_bits_per_transfer(CONF_SPI, spi_device_ext.id, CONF_SPI_EXT_BITS_PER_TRANSFER);
+	spi_master_setup_device(CONF_SPI, &spi_device_ext_1, CONF_SPI_EXT_1_MODE, CONF_SPI_EXT_1_BAUDRATE, 0);
+	spi_set_bits_per_transfer(CONF_SPI, spi_device_ext_1.id, CONF_SPI_EXT_1_BITS_PER_TRANSFER);
+
 #endif
 
 #ifdef CONF_SFISH_ENABLE_FREERTOS_TWI
@@ -209,8 +217,8 @@ int main (void) {
 	create_task_queues();
 
 #ifdef CONF_SFISH_ENABLE_CLI_TASK
-	/* Create RS485 task */
-	create_rs485_task();
+	/* Create CLI task */
+	create_cli_task();
 #endif
 
 #ifdef CONF_SFISH_ENABLE_RS485_TASK
@@ -219,16 +227,14 @@ int main (void) {
 #endif
 
 #ifdef CONF_SFISH_ENABLE_SENSORS_TASK
-	/* Create CLI task */
-	create_cli_task();
+	/* Create Sensors task */
+	create_sensors_task();
 #endif
 
 #ifdef CONF_SFISH_ENABLE_TIMER_TASK
 	/* Create Timer task */
 	create_timer_task(SOFTWARE_TIMER_RATE);
 #endif
-
-	LED_On(LED_BLUE);	// Turn on Blue LED
 
 	printf("Starting all RTOS tasks\n");
 	vTaskStartScheduler();	// This function call should never return

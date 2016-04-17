@@ -9,7 +9,7 @@
 #ifndef CONF_SONARCOM_H_
 #define CONF_SONARCOM_H_
 
-#define SW_VERSION "v0.1.1"
+#define SW_VERSION "v0.1.2"
 
 #define DEBUG_L1
 

@@ -64,29 +64,29 @@ static portBASE_TYPE task_stats_cmd         (char *pcWriteBuffer, size_t xWriteB
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ LOCAL VARIABLES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /* CLI command definitions */
-CLI_DEF_T get_version_cmd_def        = {"get_version",        "get_version\r\n",    get_version_cmd,        0};
-CLI_DEF_T mem_cmd_def                = {"mem",                "mem\r\n",            mem_cmd,                0};
-CLI_DEF_T ping_cmd_def               = {"ping",               "ping\r\n",           ping_cmd,               0};
-CLI_DEF_T ps_cmd_def                 = {"ps",                 "ps\r\n",             ps_cmd,                 0};
-CLI_DEF_T set_acc_en_cmd_def         = {"set_acc_en",         "set_acc_en",         set_acc_en_cmd,         1};
-CLI_DEF_T set_cv_en_cmd_def          = {"set_cv_en",          "set_cv_en",          set_cv_en_cmd,          1};
-CLI_DEF_T set_comp_en_cmd_def        = {"set_comp_en",        "set_comp_en",        set_comp_en_cmd,        1};
-CLI_DEF_T set_press_en_cmd_def       = {"set_press_en",       "set_press_en",       set_press_en_cmd,       1};
-CLI_DEF_T set_pwr_en_cmd_def         = {"set_pwr_en",         "set_pwr_en",         set_pwr_en_cmd,         1};
-CLI_DEF_T set_rx_deadzone_cmd_def    = {"set_rx_deadzone",    "set_rx_deadzone",    set_rx_deadzone_cmd,    1};
-CLI_DEF_T set_rx_en_cmd_def          = {"set_rx_en",          "set_rx_en",          set_rx_en_cmd,          1};
-CLI_DEF_T set_rx_gain_cmd_def        = {"set_rx_gain",        "set_rx_gain",        set_rx_gain_cmd,        1};
-CLI_DEF_T set_rx_gain_offset_cmd_def = {"set_rx_gain_offset", "set_rx_gain_offset", set_rx_gain_offset_cmd, 1};
-CLI_DEF_T set_rx_gain_slope_cmd_def  = {"set_rx_gain_slope",  "set_rx_gain_slope",  set_rx_gain_slope_cmd,  1};
-CLI_DEF_T set_rx_range_cmd_def       = {"set_rx_range",       "set_rx_range",       set_rx_range_cmd,       1};
-CLI_DEF_T set_rx_rec_en_cmd_def      = {"set_rx_rec_en",      "set_rx_rec_en",      set_rx_rec_en_cmd,      1};
-CLI_DEF_T set_sens_rec_en_cmd_def    = {"set_sens_rec_en",    "set_sens_rec_en",    set_sens_rec_en_cmd,    1};
-CLI_DEF_T set_temp_en_cmd_def        = {"set_temp_en",        "set_temp_en",        set_temp_en_cmd,        1};
-CLI_DEF_T set_tx_en_cmd_def          = {"set_tx_en",          "set_tx_en",          set_tx_en_cmd,          1};
-CLI_DEF_T set_tx_mod_cmd_def         = {"set_tx_mod",         "set_tx_mod",         set_tx_mod_cmd,         1};
-CLI_DEF_T set_tx_pow_cmd_def         = {"set_tx_pow",         "set_tx_pow",         set_tx_pow_cmd,         1};
-CLI_DEF_T set_tx_pulse_len_cmd_def   = {"set_tx_pulse_len",   "set_tx_pulse_len",   set_tx_pulse_len_cmd,   1};
-CLI_DEF_T task_stats_cmd_def         = {"task-stats",         "task-stats\r\n",     task_stats_cmd,         0};
+CLI_DEF_T get_version_cmd_def        = {"get_version",        "get_version\r\n",		get_version_cmd,        0};
+CLI_DEF_T mem_cmd_def                = {"mem",                "mem\r\n",				mem_cmd,                0};
+CLI_DEF_T ping_cmd_def               = {"ping",               "ping\r\n",				ping_cmd,               0};
+CLI_DEF_T ps_cmd_def                 = {"ps",                 "ps\r\n",					ps_cmd,                 0};
+CLI_DEF_T set_acc_en_cmd_def         = {"set_acc_en",         "set_acc_en\r\n",         set_acc_en_cmd,         1};
+CLI_DEF_T set_cv_en_cmd_def          = {"set_cv_en",          "set_cv_en\r\n",          set_cv_en_cmd,          1};
+CLI_DEF_T set_comp_en_cmd_def        = {"set_comp_en",        "set_comp_en\r\n",        set_comp_en_cmd,        1};
+CLI_DEF_T set_press_en_cmd_def       = {"set_press_en",       "set_press_en\r\n",       set_press_en_cmd,       1};
+CLI_DEF_T set_pwr_en_cmd_def         = {"set_pwr_en",         "set_pwr_en\r\n",         set_pwr_en_cmd,         1};
+CLI_DEF_T set_rx_deadzone_cmd_def    = {"set_rx_deadzone",    "set_rx_deadzone\r\n",    set_rx_deadzone_cmd,    1};
+CLI_DEF_T set_rx_en_cmd_def          = {"set_rx_en",          "set_rx_en\r\n",          set_rx_en_cmd,          1};
+CLI_DEF_T set_rx_gain_cmd_def        = {"set_rx_gain",        "set_rx_gain\r\n",        set_rx_gain_cmd,        1};
+CLI_DEF_T set_rx_gain_offset_cmd_def = {"set_rx_gain_offset", "set_rx_gain_offset\r\n", set_rx_gain_offset_cmd, 1};
+CLI_DEF_T set_rx_gain_slope_cmd_def  = {"set_rx_gain_slope",  "set_rx_gain_slope\r\n",  set_rx_gain_slope_cmd,  1};
+CLI_DEF_T set_rx_range_cmd_def       = {"set_rx_range",       "set_rx_range\r\n",       set_rx_range_cmd,       1};
+CLI_DEF_T set_rx_rec_en_cmd_def      = {"set_rx_rec_en",      "set_rx_rec_en\r\n",      set_rx_rec_en_cmd,      1};
+CLI_DEF_T set_sens_rec_en_cmd_def    = {"set_sens_rec_en",    "set_sens_rec_en\r\n",    set_sens_rec_en_cmd,    1};
+CLI_DEF_T set_temp_en_cmd_def        = {"set_temp_en",        "set_temp_en\r\n",        set_temp_en_cmd,        1};
+CLI_DEF_T set_tx_en_cmd_def          = {"set_tx_en",          "set_tx_en\r\n",          set_tx_en_cmd,          1};
+CLI_DEF_T set_tx_mod_cmd_def         = {"set_tx_mod",         "set_tx_mod\r\n",         set_tx_mod_cmd,         1};
+CLI_DEF_T set_tx_pow_cmd_def         = {"set_tx_pow",         "set_tx_pow\r\n",         set_tx_pow_cmd,         1};
+CLI_DEF_T set_tx_pulse_len_cmd_def   = {"set_tx_pulse_len",   "set_tx_pulse_len\r\n",   set_tx_pulse_len_cmd,   1};
+CLI_DEF_T task_stats_cmd_def         = {"task-stats",         "task-stats\r\n",			task_stats_cmd,         0};
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -127,7 +127,7 @@ void vRegisterCLICommands(void) {
 static portBASE_TYPE get_version_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
 	configASSERT(pcWriteBuffer);
 
-	sprintf(pcWriteBuffer, "SonarFish %s (%s, %s)\n", SW_VERSION, __DATE__, __TIME__);
+	sprintf(pcWriteBuffer, "SonarFish %s (%s, %s)\r\n", SW_VERSION, __DATE__, __TIME__);
 
 	return pdFALSE;
 }
@@ -152,7 +152,7 @@ static portBASE_TYPE mem_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const 
  * Returns 'pong'
  */
 static portBASE_TYPE ping_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
-	const uint8_t pong_packet[14] = {START_SYNC_BYTE0, START_SYNC_BYTE1, 0x0E, 0x00, PONG_PACKET, 'p', 'o', 'n', 'g', '2', '\n', 0x00, END_SYNC_BYTE0, END_SYNC_BYTE1};
+	const uint8_t pong_packet[12] = {START_SYNC_BYTE0, START_SYNC_BYTE1, 0x0E, 0x00, PONG_PACKET, 'p', 'o', 'n', 'g', '2', '\n', 0x00};
 	uint8_t *packet_ptr;
 
 	configASSERT(pcWriteBuffer);
@@ -230,10 +230,30 @@ static portBASE_TYPE set_press_en_cmd       (char *pcWriteBuffer, size_t xWriteB
 
 
 /*******************************************************************************
- * "" command
- * Returns 
+ * "Set Power Enable" command
+ * Returns 1 if success
  */
 static portBASE_TYPE set_pwr_en_cmd         (char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
+	const char *parameter_string;
+	portBASE_TYPE parameter_string_length;
+
+	configASSERT(pcWriteBuffer);
+	
+	/* Obtain the parameter string. */
+	parameter_string = FreeRTOS_CLIGetParameter(pcCommandString, 1, &parameter_string_length);
+	
+	/* Check parameter */
+	if (parameter_string != NULL && parameter_string[0] == '0') {
+		printf("Disable Blue LED\n");
+		LED_Off(LED_BLUE);
+	} else if (parameter_string != NULL && parameter_string[0] == '1') {
+		LED_On(LED_BLUE);
+		printf("Enable Blue LED\n");
+	}
+
+	/* Return */
+	sprintf(pcWriteBuffer, "1\r\n");
+	
 	return pdFALSE;
 }
 

@@ -65,8 +65,8 @@ void board_init(void) {
 	ioport_set_pin_dir(LED1_GPIO, IOPORT_DIR_OUTPUT);
 
 	/* Turn off all LEDs */
-	LED_Off(LED0_GPIO);
-	LED_Off(LED1_GPIO);
+	LED_Off(LED_RED);
+	LED_Off(LED_BLUE);
 
 
 	/* Configure Debug Console UART pins */
@@ -87,17 +87,6 @@ void board_init(void) {
 
 	/* Configure SPI pins */
 	ioport_set_port_peripheral_mode(PINS_SPI_PORT, PINS_SPI, PINS_SPI_FLAGS);
-
-
-#if 0
-	/* Configure Display GPIO pin and set it to active*/
-	ioport_set_pin_dir(DISP_RST_GPIO, IOPORT_DIR_OUTPUT);
-	ioport_set_pin_level(DISP_RST_GPIO, DISP_RST_ACTIVE_LEVEL);
-
-	/* Configure Relay GPIO pin and set it to inactive */
-	ioport_set_pin_dir(RELAY_GPIO, IOPORT_DIR_OUTPUT);
-	ioport_set_pin_level(RELAY_GPIO, RELAY_INACTIVE_LEVEL);
-#endif
 
 	/* Configure USB GPIO pin */
 	ioport_set_pin_dir(USB_VBUS_PIN, IOPORT_DIR_INPUT);

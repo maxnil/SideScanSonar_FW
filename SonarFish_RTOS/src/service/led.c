@@ -11,6 +11,7 @@
 #include "led.h"
 #include "user_board.h"
 
+#if 0
 /**
  * Turns LED On
  */
@@ -39,3 +40,4 @@ void LED_Toggle(uint32_t led_gpio) {
 	ioport_toggle_pin_level(led_gpio);
 //	taskEXIT_CRITICAL();
 }
+#endif

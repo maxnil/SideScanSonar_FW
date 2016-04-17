@@ -1,7 +1,7 @@
 /*
- * gps_task.c
+ * sensors_task.c
  *
- * Created: 2016-02-14 15:37:32
+ * Created: 2016-04-13 21:36:49
  *  Author: Max
  */ 
 
@@ -13,55 +13,56 @@
 
 /* FreeRTOS includes. */
 #include "FreeRTOS.h"
-#include "freertos_usart_serial.h"
+#include "freertos_uart_serial.h"
 #include "task.h"
 #include "queue.h"
 
-#include "gps_task.h"
+#include "sensors_task.h"
 #include "packets.h"
 #include "task_queues.h"
 
 //~~~~~~~~~~~~~~~~~~~~~~~~ LOCAL FUNCTION DECLARATIONS ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-static void gps_task(void *pvParameters);
+static void sensors_task(void *pvParameters);
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 /*******************************************************************************
- * GPS Task creator
+ * Sensors Task creator
  */
-void create_gps_task(void) {
+void create_sensors_task(void) {
 	
-	/* Create the USART CLI task. */
-	xTaskCreate(	gps_task,						/* The task that implements the GPS data handler */
-					(const char *const) "GPS",		/* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
-					GPS_TASK_STACK_SIZE,			/* The size of the stack allocated to the task. */
+	/* Create the UART CLI task. */
+	xTaskCreate(	sensors_task,					/* The task that implements the Sensor data handler */
+					(const char *const) "SENSOR",	/* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
+					SENSORS_TASK_STACK_SIZE,		/* The size of the stack allocated to the task. */
 					NULL,							/* The parameter is not used. */
-					GPS_TASK_PRIORITY,				/* The priority allocated to the task. */
+					SENSORS_TASK_PRIORITY,			/* The priority allocated to the task. */
 					NULL);							/* Used to store the handle to the created task - in this case the handle is not required. */
 }
 
 
 /*******************************************************************************
- * GPS Task
- * Reads GPS data from GPS UART, and sends it to the USB Data Channel
+ * Sensors Task
+ * Reads Sensor data from Sensor UART, and sends it to the RS485 Data Channel
  * (via the data channel queue)
  */
-static void gps_task(void *pvParameters) {
+static void sensors_task(void *pvParameters) {
 	int packet_len;
 	struct packet_t *packet_ptr;
 	uint8_t *data_ptr;
 
 	/* Loop forever */
 	for (;;) {
+#if 0
 		/* Allocate new GPS data packet buffer */
 		packet_ptr = (struct packet_t*)pvPortMalloc(GPS_RX_BUFFER_SIZE);
 
 	reuse_buffer:
 	
 		/* Get pointer to start of data area in packet */
-		data_ptr = (uint8_t*)&(packet_ptr->data);
+		data_ptr = &(packet_ptr->data);
 		
 		/* Find start of GPS sentence ('$') */
 		do {
@@ -105,5 +106,6 @@ static void gps_task(void *pvParameters) {
 //			printf("#WARNING: Failed to send GPS packet to data_queue\n");
 			goto reuse_buffer;		// Restart
 		}
+#endif
 	}
 }

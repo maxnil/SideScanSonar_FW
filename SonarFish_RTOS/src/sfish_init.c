@@ -13,52 +13,30 @@
 #include "sfish_init.h"
 #include "led.h"
 
-//#include "conf_afec.h"
-//#include "conf_spi_master.h"
-//#include "conf_twi_master.h"
 #include "conf_uart_serial.h"
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFINES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#define ADC_CLOCK   6400000
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /*******************************************************************************
  * Initialize Analog inputs and internal Temperature Sensor
  */
-#if 0
-void scom_analog_init(void) {
-	afec_enable(CONF_AFEC);
+void sfish_analog_init(void) {
 
-	struct afec_config afec_cfg;
-
-	afec_get_config_defaults(&afec_cfg);
-	afec_cfg.afec_clock = CONF_AFEC_CLOCK_FREQ;
-	afec_init(CONF_AFEC, &afec_cfg);
-
-	afec_set_trigger(CONF_AFEC, AFEC_TRIG_FREERUN);		// Keep the ADC running...
-//	afec_set_trigger(CONF_AFEC, AFEC_TRIG_SW);		// SW trigger
-
-	struct afec_ch_config afec_ch_cfg;
-	afec_ch_get_config_defaults(&afec_ch_cfg);
-	afec_ch_set_config(CONF_AFEC, AFEC_CHANNEL_0, &afec_ch_cfg);
-	afec_ch_set_config(CONF_AFEC, AFEC_CHANNEL_1, &afec_ch_cfg);
-	afec_ch_set_config(CONF_AFEC, AFEC_CHANNEL_2, &afec_ch_cfg);
-	afec_ch_set_config(CONF_AFEC, AFEC_CHANNEL_3, &afec_ch_cfg);
-	afec_ch_set_config(CONF_AFEC, AFEC_TEMPERATURE_SENSOR, &afec_ch_cfg);
-
-	afec_channel_enable(CONF_AFEC, AFEC_CHANNEL_0);
-	afec_channel_enable(CONF_AFEC, AFEC_CHANNEL_1);
-	afec_channel_enable(CONF_AFEC, AFEC_CHANNEL_2);
-	afec_channel_enable(CONF_AFEC, AFEC_CHANNEL_3);
-	afec_channel_enable(CONF_AFEC, AFEC_TEMPERATURE_SENSOR);
-
-	// Internal ADC offset is 0x800
-	afec_channel_set_analog_offset(CONF_AFEC, AFEC_TEMPERATURE_SENSOR, 0x800);
-
-	struct afec_temp_sensor_config afec_temp_sensor_cfg;
-	afec_temp_sensor_get_config_defaults(&afec_temp_sensor_cfg);
-//	afec_temp_sensor_cfg.rctc = true;
-	afec_temp_sensor_set_config(CONF_AFEC, &afec_temp_sensor_cfg);
+	adc_init(ADC, sysclk_get_main_hz(), ADC_CLOCK, ADC_STARTUP_TIME_15);
+	adc_configure_timing(ADC, 0, ADC_SETTLING_TIME_3, 1);
+	adc_configure_trigger(ADC, 0, 1); // ADC_MR_FREERUN_ON
+	adc_set_resolution(ADC, ADC_MR_LOWRES_BITS_12);
+	adc_enable_channel(ADC, ADC_IF_0);
+	adc_enable_channel(ADC, ADC_IF_1);
+	adc_enable_ts(ADC);
+	adc_enable_channel(ADC, ADC_TEMPERATURE_SENSOR);
+	adc_start(ADC);
 }
-#endif
+
 
 /*******************************************************************************
  * Initialize STDIO Debug Console
@@ -76,42 +54,38 @@ void sfish_debug_console_init(void) {
 /*******************************************************************************
  * Get chip temperature (in Celsius)
  */
-#if 0
-int32_t get_chip_temperature(void) {
-	int32_t ul_vol;
-	int32_t ul_value;
-	int32_t ul_temp;
+int get_chip_temperature(void) {
+	int ul_mvolt;
+	int ul_value;
+	int ul_temp;
 
-	ul_value = afec_channel_get_value(CONF_AFEC, AFEC_TEMPERATURE_SENSOR);
+	ul_value = adc_get_channel_value(ADC, ADC_TEMPERATURE_SENSOR);
 	
-	ul_vol = ul_value * VOLT_REF / MAX_DIGITAL;
+	ul_mvolt = ul_value * VOLT_REF / MAX_DIGITAL;
 
 	/*
 	 * According to datasheet, The output voltage VT = 1.44V at 27C
 	 * and the temperature slope dVT/dT = 4.7 mV/C
 	 */
-	ul_temp = (ul_vol - 1440)  * 100 / 470 + 27;
+	ul_temp = (((ul_mvolt - 1440)  * 100) / 470) + 27;
 	return ul_temp;
 }
-#endif
+
 
 /*******************************************************************************
  * Get analog voltage value
  */
-#if 0
-int32_t get_analog_input(int adc_nr) {
-	int32_t ul_vol;
-	int32_t ul_value;
+int get_analog_input(int adc_nr) {
+	int ul_mvolt;
+	int ul_value;
 
 	if (adc_nr >= BOARD_NR_ADC) {
 		return 0;
 	}
 	
-	ul_value = afec_channel_get_value(CONF_AFEC, AFEC_CHANNEL_0 + adc_nr);
+	ul_value = adc_get_channel_value(ADC, ADC_IF_0 + adc_nr);
 	
-	ul_vol = ul_value * VOLT_REF / MAX_DIGITAL;
+	ul_mvolt = (ul_value * VOLT_REF) / MAX_DIGITAL;
 	
-	return ul_vol;
+	return ul_mvolt;
 }
-#endif
-
