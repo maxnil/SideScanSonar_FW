@@ -43,11 +43,11 @@ void sfish_analog_init(void) {
  */
 void sfish_debug_console_init(void) {
 	const usart_serial_options_t console_uart_options = {
-		.baudrate     = CONSOLE_UART_BAUDRATE,
-		.paritytype   = CONSOLE_UART_PARITY
+		.baudrate     = CONF_DEBUG_UART_BAUDRATE,
+		.paritytype   = CONF_DEBUG_UART_PARITY
 	};
 
-	stdio_serial_init(CONSOLE_UART, &console_uart_options);
+	stdio_serial_init(CONF_DEBUG_UART, &console_uart_options);
 }
 
 

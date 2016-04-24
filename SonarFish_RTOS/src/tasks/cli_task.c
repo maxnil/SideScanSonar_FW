@@ -82,7 +82,7 @@ static void cli_task(void *pvParameters) {
 	/* Loop forever */
 	for (;;) {
 		/* Check if there are any pending commands */
-		if (xQueueReceive(command_queue, &cmd_packet_ptr, (TickType_t)0) == pdTRUE) {
+		if (xQueueReceive(command_queue, &cmd_packet_ptr, (TickType_t)portMAX_DELAY) == pdTRUE) {
 			input_string = (char*)cmd_packet_ptr->data;
 			printf("CLI Task: Command string = %s\n", input_string);
 			do {

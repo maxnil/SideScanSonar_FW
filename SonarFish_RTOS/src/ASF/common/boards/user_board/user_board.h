@@ -32,15 +32,12 @@
 #define ADC_IF_0					ADC_CHANNEL_13
 #define ADC_IF_1					ADC_CHANNEL_14
 
-/* Debug UART Console
+/* Debug Console UART
  * UART0 pins (UTXD0 and URXD0) definitions, PA10,9. */
 #define PINS_UART0					( PIO_PA9A_URXD0 \
 									| PIO_PA10A_UTXD0)
 #define PINS_UART0_FLAGS			(IOPORT_MODE_MUX_A)
 #define PINS_UART0_PORT				IOPORT_PIOA
-/** Debug Console UART */
-#define CONSOLE_UART				UART0
-#define CONSOLE_UART_ID				ID_UART0
 
 
 /* Sensor UART
@@ -48,7 +45,7 @@
 #define PINS_UART1					( PIO_PB2A_URXD1 \
 									| PIO_PB3A_UTXD1)
 #define PINS_UART1_FLAGS			(IOPORT_MODE_MUX_A)
-#define PINS_UART1_PORT				IOPORT_PIOA
+#define PINS_UART1_PORT				IOPORT_PIOB
 
 
 /* RS485 UART
@@ -61,9 +58,6 @@
 #define PIN_USART1_RTS				{PIO_PA24A_RTS1, PIOA, ID_PIOA, PIO_PERIPH_A, PIO_DEFAULT}
 #define PIN_USART1_RTS_IDX			(PIO_PA24_IDX)
 #define PIN_USART1_RTS_FLAGS		(IOPORT_MODE_MUX_A)
-/* RS485 relate PIN definition. */
-#define RS485_USART_ID				ID_USART1
-#define RS485_USART					USART1
 
 
 /* I2C/TWI

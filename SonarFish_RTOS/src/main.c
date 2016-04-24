@@ -44,7 +44,7 @@
 /* Tasks */
 #include "cli_task.h"
 #include "rs485_task.h"
-#include "sensors_task.h"
+#include "sensor_task.h"
 #include "timer_task.h"
 //#include "USB_CDC_tasks.h"
 #include "task_queues.h"
@@ -105,24 +105,26 @@ int main (void) {
 	printf("ADC IF 1: %d\n", get_analog_input(1));
 	printf("Internal temperature: %d\n", get_chip_temperature());
 
-#ifdef CONF_SFISH_ENABLE_FREERTOS_SENSORS_UART
+#ifdef CONF_SFISH_ENABLE_FREERTOS_SENSOR_UART
 	/* Initialize FreeRTOS Sensor UART driver */
-	uint8_t *sensors_rx_buffer;
-	configASSERT(sensors_rx_buffer = (uint8_t*)pvPortMalloc(SENSORS_RX_BUFFER_SIZE));
+	uint8_t *sensor_rx_buffer;
+	configASSERT(sensor_rx_buffer = (uint8_t*)pvPortMalloc(SENSOR_RX_BUFFER_SIZE));
 
-	freertos_peripheral_options_t sensors_periph_opt = {
-		.receive_buffer = sensors_rx_buffer,
-		.receive_buffer_size = SENSORS_RX_BUFFER_SIZE,
+	freertos_peripheral_options_t sensor_periph_opt = {
+		.receive_buffer = sensor_rx_buffer,
+		.receive_buffer_size = SENSOR_RX_BUFFER_SIZE,
 		.interrupt_priority = configLIBRARY_LOWEST_INTERRUPT_PRIORITY - 1,
 		.operation_mode = UART_RS232,
 		.options_flags = WAIT_RX_COMPLETE | WAIT_TX_COMPLETE
 	};
 
-	sam_uart_opt_t sensors_uart_opt = {
-		.ul_baudrate = CONF_SENSORS_BAUDRATE,
-		.ul_mode = UART_MR_PAR_NO
+	sam_uart_opt_t sensor_uart_opt = {
+		.ul_baudrate = CONF_SENSOR_UART_BAUDRATE,
+		.ul_mode = CONF_SENSOR_UART_PARITY,
+		.ul_mck = sysclk_get_peripheral_hz()
 	};
-	configASSERT(freertos_uart_serial_init(CONF_SENSORS_UART, &sensors_uart_opt, &sensors_periph_opt));
+
+	configASSERT(freertos_uart_serial_init(CONF_SENSOR_UART, &sensor_uart_opt, &sensor_periph_opt));
 #endif
 
 #ifdef CONF_SFISH_ENABLE_FREERTOS_RS485_USART
@@ -143,14 +145,14 @@ int main (void) {
 		.channel_mode = US_MR_CHMODE_NORMAL,
 		.char_length = US_MR_CHRL_8_BIT,
 		.irda_filter = 0,
-		.parity_type = US_MR_PAR_NO,
+		.parity_type = CONF_RS485_UART_PARITY,
 		.stop_bits = US_MR_NBSTOP_1_BIT
 	};
 
-	configASSERT(freertos_usart_serial_init(CONF_RS485_USART, &rs485_usart_opt, &rs485_periph_opt));
+	configASSERT(freertos_usart_serial_init(CONF_RS485_UART, &rs485_usart_opt, &rs485_periph_opt));
 	
 	/* Set RS485 mode. */
-	CONF_RS485_USART->US_MR = (CONF_RS485_USART->US_MR & ~US_MR_USART_MODE_Msk) | US_MR_USART_MODE_RS485;
+	CONF_RS485_UART->US_MR = (CONF_RS485_UART->US_MR & ~US_MR_USART_MODE_Msk) | US_MR_USART_MODE_RS485;
 #endif
 
 #ifdef CONF_SFISH_ENABLE_FREERTOS_SPI
@@ -228,7 +230,7 @@ int main (void) {
 
 #ifdef CONF_SFISH_ENABLE_SENSORS_TASK
 	/* Create Sensors task */
-	create_sensors_task();
+	create_sensor_task();
 #endif
 
 #ifdef CONF_SFISH_ENABLE_TIMER_TASK

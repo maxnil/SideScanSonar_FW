@@ -72,18 +72,14 @@ void board_init(void) {
 	/* Configure Debug Console UART pins */
 	ioport_set_port_peripheral_mode(PINS_UART0_PORT, PINS_UART0, PINS_UART0_FLAGS);
 
-
 	/* Configure Sensor UART pins */
 	ioport_set_port_peripheral_mode(PINS_UART1_PORT, PINS_UART1, PINS_UART1_FLAGS);
-
 
 	/* Configure RS485 USART pins */
 	ioport_set_port_peripheral_mode(PINS_USART1_PORT, PINS_USART1, PINS_USART1_FLAGS);
 
-
 	/* Configure TWI */
 	ioport_set_port_peripheral_mode(PINS_TWI0_PORT, PINS_TWI0, PINS_TWI0_FLAGS);
-
 
 	/* Configure SPI pins */
 	ioport_set_port_peripheral_mode(PINS_SPI_PORT, PINS_SPI, PINS_SPI_FLAGS);

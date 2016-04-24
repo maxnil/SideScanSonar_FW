@@ -138,6 +138,16 @@ static void rs485_task(void *pvParameters) {
 					goto reuse_buffer;						// Restart
 				}
 				break;
+			case SONAR_PACKET:
+			case SENSOR_PACKET:
+				/* Put RS485 packet on the data queue */
+				printf("RS485: Got data packet\n");
+				if (xQueueSend(data_channel_queue, &packet_ptr, portMAX_DELAY) != pdPASS) {
+					printf("#WARNING: Failed to put RS485 packet on the data_channel_queue\n");
+					rs485_send_packet();					// Transmit any pending Tx packet
+					goto reuse_buffer;						// Restart
+				}
+				break;
 			case IDLE_PACKET:
 //				printf("RS485: Got idle packet (%d, %d)\n", idle_cnt++, resp_cnt);
 				rs485_send_packet();						// Transmit any pending Tx packet

@@ -16,14 +16,14 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEFINES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /* Task priorities */
-#define SENSORS_TASK_PRIORITY		(tskIDLE_PRIORITY + 1)
+#define SENSOR_TASK_PRIORITY		(tskIDLE_PRIORITY + 1)
 
 /* Task stack sizes */
-#define SENSORS_TASK_STACK_SIZE		(configMINIMAL_STACK_SIZE * 3)
+#define SENSOR_TASK_STACK_SIZE		(configMINIMAL_STACK_SIZE * 3)
 
-#define SENSORS_RX_BUFFER_SIZE 100
+#define SENSOR_RX_BUFFER_SIZE 100
 
 /* Sensors Task creator */
-void create_sensors_task(void);
+void create_sensor_task(void);
 
 #endif /* SENSORS_TASK_H_ */

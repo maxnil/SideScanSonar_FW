@@ -81,14 +81,14 @@ static void rs485_task(void *pvParameters) {
 		/* Find start of Sonar packet, i.e. first sync byte */
 		do {
 			/* Get one byte from RS485 UART, timeout after X ms */
-			if (freertos_usart_serial_read_packet(CONF_RS485_USART, &(packet_ptr->start_sync[0]), 1, RS485_TIMEOUT_MS/portTICK_PERIOD_MS) != 1) {
+			if (freertos_usart_serial_read_packet(CONF_RS485_UART, &(packet_ptr->start_sync[0]), 1, RS485_TIMEOUT_MS/portTICK_PERIOD_MS) != 1) {
 				rs485_send_packet();					// Rx timeout, transmit any pending Tx packet
 				goto reuse_buffer;						// Restart
 			}
 		} while ((packet_ptr->start_sync[0]) != START_SYNC_BYTE0);
 	
 		/* Get second byte, timeout after x ms */
-		if (freertos_usart_serial_read_packet(CONF_RS485_USART, &(packet_ptr->start_sync[1]), 1, RS485_TIMEOUT_MS/portTICK_PERIOD_MS) != 1) {
+		if (freertos_usart_serial_read_packet(CONF_RS485_UART, &(packet_ptr->start_sync[1]), 1, RS485_TIMEOUT_MS/portTICK_PERIOD_MS) != 1) {
 			rs485_send_packet();						// Rx timeout, transmit any pending Tx packet
 			goto reuse_buffer;							// Restart
 		}
@@ -99,7 +99,7 @@ static void rs485_task(void *pvParameters) {
 		}
 
 		/* Get packet length, timeout after x ms */
-		if (freertos_usart_serial_read_packet(CONF_RS485_USART, (uint8_t*)&(packet_ptr->length), 2, RS485_TIMEOUT_MS/portTICK_PERIOD_MS) != 2) {
+		if (freertos_usart_serial_read_packet(CONF_RS485_UART, (uint8_t*)&(packet_ptr->length), 2, RS485_TIMEOUT_MS/portTICK_PERIOD_MS) != 2) {
 			printf("Did not receive any Sonar Packet before timeout\n");
 			rs485_send_packet();						// Rx timeout, transmit any pending Tx packet
 			goto reuse_buffer;							// Restart
@@ -115,7 +115,7 @@ static void rs485_task(void *pvParameters) {
 		}
 
 		/* Get packet type, timeout after x ms */
-		if (freertos_usart_serial_read_packet(CONF_RS485_USART, &(packet_ptr->type), 1, RS485_TIMEOUT_MS/portTICK_PERIOD_MS) != 1) {
+		if (freertos_usart_serial_read_packet(CONF_RS485_UART, &(packet_ptr->type), 1, RS485_TIMEOUT_MS/portTICK_PERIOD_MS) != 1) {
 			rs485_send_packet();						// Rx timeout, transmit any pending Tx packet
 			goto reuse_buffer;							// Restart
 		}
@@ -126,7 +126,7 @@ static void rs485_task(void *pvParameters) {
 		}
 
 		/* Get rest of packet, timeout after x ms */
-		nr_bytes_received = freertos_usart_serial_read_packet(CONF_RS485_USART, (uint8_t*)&(packet_ptr->data), packet_len - PACKET_HEADER_SIZE, RS485_TIMEOUT_MS/portTICK_PERIOD_MS);
+		nr_bytes_received = freertos_usart_serial_read_packet(CONF_RS485_UART, (uint8_t*)&(packet_ptr->data), packet_len - PACKET_HEADER_SIZE, RS485_TIMEOUT_MS/portTICK_PERIOD_MS);
 		if (nr_bytes_received != (packet_len - PACKET_HEADER_SIZE)) {
 			printf("Did not receive a complete Sonar Packet before timeout (%d:%d)\n", packet_len, nr_bytes_received);
 			rs485_send_packet();						// Rx timeout, transmit any pending Tx packet
@@ -171,14 +171,14 @@ void rs485_send_packet(void) {
 	/* Check if there are any pending data packets to send to the Sonar Fish */	
 	if (xQueueReceive(data_channel_queue, &packet_ptr, (TickType_t)0) == pdTRUE) {
 		printf("Sending data packet to SonarCom: %s\n", (char*)packet_ptr->data);
-		status = freertos_usart_write_packet(CONF_RS485_USART, (uint8_t*)packet_ptr, packet_ptr->length, RS485_TIMEOUT_MS/portTICK_PERIOD_MS);
+		status = freertos_usart_write_packet(CONF_RS485_UART, (uint8_t*)packet_ptr, packet_ptr->length, RS485_TIMEOUT_MS/portTICK_PERIOD_MS);
 		if (status != STATUS_OK) {
 			printf("RS485: rs485_send_packet (command) failed %d\n", status);
 		}
 		vPortFree(packet_ptr);
 	} else {
 //		printf("Sending Idle packet to SonarCom\n");
-		status = freertos_usart_write_packet(CONF_RS485_USART, (uint8_t*)&idle_packet, idle_packet.length, RS485_TIMEOUT_MS/portTICK_PERIOD_MS);
+		status = freertos_usart_write_packet(CONF_RS485_UART, (uint8_t*)&idle_packet, idle_packet.length, RS485_TIMEOUT_MS/portTICK_PERIOD_MS);
 		if (status != STATUS_OK) {
 			printf("RS485: rs485_send_packet (idle) failed %d\n", status);
 		}

@@ -1,12 +1,11 @@
-/**
- * \file
- *
- * \brief User board initialization template
- *
- */
 /*
- * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
+ * init.c
+ *
+ * Created: 2016-04-17 23:41:45
+ * Author : Max
  */
+
+
 
 #include <asf.h>
 #include <board.h>

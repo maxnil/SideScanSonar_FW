@@ -741,10 +741,10 @@
     <Compile Include="src\tasks\rs485_task.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\tasks\sensors_task.c">
+    <Compile Include="src\tasks\sensor_task.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\tasks\sensors_task.h">
+    <Compile Include="src\tasks\sensor_task.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\tasks\task_queues.c">
