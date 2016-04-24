@@ -84,7 +84,8 @@ static void sensor_task(void *pvParameters) {
 		data_ptr++;
 		
 		/* Find end of Sensor sentence (0x0A) */
-		for (packet_len = PACKET_HEADER_SIZE + 1 + 1; packet_len < SENSOR_RX_BUFFER_SIZE; packet_len++) {
+		/* packet_len includes first data received (+1) */
+		for (packet_len = PACKET_HEADER_SIZE + 1; packet_len < SENSOR_RX_BUFFER_SIZE; packet_len++) {
 			/* Get one character from Sensor UART */
 			freertos_uart_serial_read_packet(CONF_SENSOR_UART, data_ptr, 1, 1000/portTICK_PERIOD_MS);
 			if (*(data_ptr++) == 0x0A) {
@@ -96,10 +97,12 @@ static void sensor_task(void *pvParameters) {
 		goto reuse_buffer;		// Restart
 		
 	end_char_found:
-
+		packet_len++;			// Include the last data received
+		
 		/* Making sure last byte is 0x00 so we can print it with printf */
 		*(data_ptr++) = 0x00;
 		packet_len++;
+
 		
 		/* Create packet header and footer */
 		packet_ptr->start_sync[0] = START_SYNC_BYTE0;
@@ -108,6 +111,7 @@ static void sensor_task(void *pvParameters) {
 		packet_ptr->type = SENSOR_PACKET;
 
 		/* The Sensor Sentence has end of line in it, so we do not need to add one here */
+//		printf("Length %d ", packet_ptr->length);
 //		printf("Sensor: %s", packet_ptr->data);
 
 		/* Put Sensor packet on the data queue */

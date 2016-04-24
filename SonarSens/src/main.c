@@ -144,8 +144,8 @@ int main (void)
 #ifdef CONF_SSENS_ENABLE_TIMER
 	/* Start timers */
 	tc_timeout_start_periodic(TEMPERATURE_TIMEOUT, TC_TIMEOUT_TICK_HZ/1);	// 1Hz
-	tc_timeout_start_periodic(OUTPUT_TIMEOUT,      TC_TIMEOUT_TICK_HZ/20);	// 20Hz
-	tc_timeout_start_periodic(SENSORS_TIMEOUT,     TC_TIMEOUT_TICK_HZ/100);	// 100Hz
+	tc_timeout_start_periodic(OUTPUT_TIMEOUT,      TC_TIMEOUT_TICK_HZ/2);	// 2Hz
+	tc_timeout_start_periodic(SENSORS_TIMEOUT,     TC_TIMEOUT_TICK_HZ/10);	// 10Hz
 #endif
 		
 	printf(DBG_WELCOME_HEADER);

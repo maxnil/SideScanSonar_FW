@@ -9,7 +9,7 @@
 #ifndef CONF_SONARFISH_H_
 #define CONF_SONARFISH_H_
 
-#define SW_VERSION "v0.1.2"
+#define SW_VERSION "v0.1.3"
 
 #define DEBUG_L1
 
