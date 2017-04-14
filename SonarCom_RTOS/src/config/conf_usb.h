@@ -51,12 +51,6 @@
 #include "FreeRTOS.h"
 #include <usb_atmel.h>
 
-/* Callback prototypes. */
-void usb_vbus_event(bool b_vbus_high);
-bool usb_cdc_enable(uint8_t port);
-void usb_cdc_disable(uint8_t port);
-void usb_cdc_rx_notify(uint8_t port);
-
 /* Callback functions are using FreeRTOS API functions so ensure the USB
 interrupt priority is at or below configMAX_SYSCALL_INTERRUPT_PRIORITY. */
 #define UDD_USB_INT_LEVEL				configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY
@@ -79,7 +73,7 @@ interrupt priority is at or below configMAX_SYSCALL_INTERRUPT_PRIORITY. */
 //! USB Device string definitions (Optional)
 #define  USB_DEVICE_MANUFACTURE_NAME      "DML"
 #define  USB_DEVICE_PRODUCT_NAME          "SonarCom"
-#define  USB_DEVICE_SERIAL_NAME           "XX"
+#define  USB_DEVICE_SERIAL_NAME           "SCom "
 
 
 /**
@@ -98,13 +92,23 @@ interrupt priority is at or below configMAX_SYSCALL_INTERRUPT_PRIORITY. */
  * USB Device Callbacks definitions (Optional)
  * @{
  */
-// #define  UDC_VBUS_EVENT(b_vbus_high)      user_callback_vbus_action(b_vbus_high)
+/* Callback prototypes. */
+void usb_vbus_event_callback(bool b_vbus_high);
+bool usb_cdc_enable_callback(uint8_t port);
+void usb_cdc_disable_callback(uint8_t port);
+void usb_cdc_rx_notify_callback(uint8_t port);
+void usb_cdc_suspend_callback();
+void usb_cdc_resume_callback();
+void usb_cdc_set_dtr_callback(uint8_t port, bool set);
+void usb_cdc_set_rts_callback(uint8_t port, bool set);
+
+#define UDC_VBUS_EVENT(b_vbus_high) usb_vbus_event_callback(b_vbus_high)
 // extern void user_callback_vbus_action(bool b_vbus_high);
 // #define  UDC_SOF_EVENT()                  user_callback_sof_action()
 // extern void user_callback_sof_action(void);
-// #define  UDC_SUSPEND_EVENT()              user_callback_suspend_action()
+#define  UDC_SUSPEND_EVENT()              usb_cdc_suspend_callback()
 // extern void user_callback_suspend_action(void);
-// #define  UDC_RESUME_EVENT()               user_callback_resume_action()
+#define  UDC_RESUME_EVENT()               usb_cdc_resume_callback()
 // extern void user_callback_resume_action(void);
 // Mandatory when USB_DEVICE_ATTR authorizes remote wakeup feature
 // #define  UDC_REMOTEWAKEUP_ENABLE()        user_callback_remotewakeup_enable()
@@ -132,28 +136,13 @@ interrupt priority is at or below configMAX_SYSCALL_INTERRUPT_PRIORITY. */
 #define  UDI_CDC_PORT_NB 2
 
 //! Interface callback definition
-#define  UDI_CDC_ENABLE_EXT(port)				usb_cdc_enable(port)
-#define  UDI_CDC_DISABLE_EXT(port)				usb_cdc_disable(port)
-#define  UDI_CDC_RX_NOTIFY(port)				usb_cdc_rx_notify(port)
+#define  UDI_CDC_ENABLE_EXT(port)				usb_cdc_enable_callback(port)
+#define  UDI_CDC_DISABLE_EXT(port)				usb_cdc_disable_callback(port)
+#define  UDI_CDC_RX_NOTIFY(port)				usb_cdc_rx_notify_callback(port)
 #define  UDI_CDC_SET_CODING_EXT(port,cfg)
-#define  UDI_CDC_SET_DTR_EXT(port,set)
-#define  UDI_CDC_SET_RTS_EXT(port,set)
+#define  UDI_CDC_SET_DTR_EXT(port,set)          usb_cdc_set_dtr_callback(port, set)
+#define  UDI_CDC_SET_RTS_EXT(port,set)          usb_cdc_set_rts_callback(port, set)
 #define  UDI_CDC_TX_EMPTY_NOTIFY(port)
-
-// #define UDI_CDC_ENABLE_EXT(port) my_callback_cdc_enable()
-// extern bool my_callback_cdc_enable(void);
-// #define UDI_CDC_DISABLE_EXT(port) my_callback_cdc_disable()
-// extern void my_callback_cdc_disable(void);
-// #define  UDI_CDC_RX_NOTIFY(port) my_callback_rx_notify(port)
-// extern void my_callback_rx_notify(uint8_t port);
-// #define  UDI_CDC_TX_EMPTY_NOTIFY(port) my_callback_tx_empty_notify(port)
-// extern void my_callback_tx_empty_notify(uint8_t port);
-// #define  UDI_CDC_SET_CODING_EXT(port,cfg) my_callback_config(port,cfg)
-// extern void my_callback_config(uint8_t port, usb_cdc_line_coding_t * cfg);
-// #define  UDI_CDC_SET_DTR_EXT(port,set) my_callback_cdc_set_dtr(port,set)
-// extern void my_callback_cdc_set_dtr(uint8_t port, bool b_enable);
-// #define  UDI_CDC_SET_RTS_EXT(port,set) my_callback_cdc_set_rts(port,set)
-// extern void my_callback_cdc_set_rts(uint8_t port, bool b_enable);
 
 //! Define it when the transfer CDC Device to Host is a low rate (<512000 bauds)
 //! to reduce CDC buffers size

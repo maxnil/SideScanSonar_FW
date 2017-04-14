@@ -729,6 +729,12 @@
     <Compile Include="src\sfish_init.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\sonar_data.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\sonar_data.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\tasks\cli_task.c">
       <SubType>compile</SubType>
     </Compile>

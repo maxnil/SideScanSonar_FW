@@ -208,7 +208,7 @@
             <Value>libm</Value>
           </ListValues>
         </avrgcc.linker.libraries.Libraries>
-        <avrgcc.linker.miscellaneous.LinkerFlags>-Wl,--relax</avrgcc.linker.miscellaneous.LinkerFlags>
+        <avrgcc.linker.miscellaneous.LinkerFlags>-Wl,-u,vfprintf -lprintf_flt -lm</avrgcc.linker.miscellaneous.LinkerFlags>
         <avrgcc.assembler.general.AssemblerFlags>-mrelax -DBOARD=USER_BOARD</avrgcc.assembler.general.AssemblerFlags>
         <avrgcc.assembler.general.IncludePaths>
           <ListValues>
@@ -239,10 +239,34 @@
     <Compile Include="src\config\conf_sonarsens.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\services\magnetometer.c">
+    <Compile Include="src\services\compass.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\services\magnetometer.h">
+    <Compile Include="src\services\compass.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\services\filter.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\services\filter.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\services\serial_port.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\services\serial_port.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\services\temperature.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\services\temperature.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\services\tilt.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\services\tilt.h">
       <SubType>compile</SubType>
     </Compile>
     <None Include="src\ASF\common\services\delay\delay.h">

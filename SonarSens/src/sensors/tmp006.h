@@ -27,14 +27,10 @@ typedef struct tmp006_conf_t {
 
 
 /* Initialize TMP006 temperature sensor */
-int8_t tmp006_init(tvoid);
+int8_t tmp006_init(void);
 
 
 /* Get data from TMP006 */
-int8_t tmp006_get_data(tmp006_data_t *data);
-
-
-/* Calculate temperature */
-double tmp006_temp_calc(double vobj, double Tdie);
+bool tmp006_get_data(tmp006_data_t *data);
 
 #endif /* TMP006_H_ */

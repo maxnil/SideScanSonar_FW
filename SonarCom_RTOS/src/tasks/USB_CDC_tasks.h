@@ -23,6 +23,9 @@
 #define CDC_CLI_TASK_STACK_SIZE				(configMINIMAL_STACK_SIZE * 4)
 #define CDC_DATA_CHANNEL_TASK_STACK_SIZE	(configMINIMAL_STACK_SIZE * 4)
 
+extern bool usb_power;
+extern bool usb_connected;
+
 /* USB CDC Task creator */
 void create_usb_cdc_tasks(void);
 

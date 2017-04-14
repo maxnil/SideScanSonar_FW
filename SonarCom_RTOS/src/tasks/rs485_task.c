@@ -128,20 +128,37 @@ static void rs485_task(void *pvParameters) {
 		/* Check packet type */
 		switch (packet_ptr->type) {
 			case RESPONSE_PACKET:
-			case END_RESPONSE_PACKET:
+			case LAST_RESPONSE_PACKET:
 				resp_cnt++;
 				/* Put RS485 packet on the response queue */
-				printf("RS485: Got response packet\n");
+				printf("RS485: Got CLI response packet type: 0x%.2x\n", packet_ptr->type);
 				if (xQueueSend(response_queue, &packet_ptr, portMAX_DELAY) != pdPASS) {
 					printf("#WARNING: Failed to put RS485 packet on the reponse_queue\n");
 					rs485_send_packet();					// Transmit any pending Tx packet
 					goto reuse_buffer;						// Restart
 				}
 				break;
+			case PONG_PACKET:
+				/* Put RS485 packet on the data queue */
+				printf("RS485: Got pong packet\n");
+				if (xQueueSend(data_channel_queue, &packet_ptr, portMAX_DELAY) != pdPASS) {
+					printf("#WARNING: Failed to put RS485 packet on the data_channel_queue\n");
+					rs485_send_packet();					// Transmit any pending Tx packet
+					goto reuse_buffer;						// Restart
+				}
+				break;			
 			case SONAR_PACKET:
+				/* Put RS485 packet on the data queue */
+				printf("RS485: Got sonar packet\n");
+				if (xQueueSend(data_channel_queue, &packet_ptr, portMAX_DELAY) != pdPASS) {
+					printf("#WARNING: Failed to put RS485 packet on the data_channel_queue\n");
+					rs485_send_packet();					// Transmit any pending Tx packet
+					goto reuse_buffer;						// Restart
+				}
+				break;			
 			case SENSOR_PACKET:
 				/* Put RS485 packet on the data queue */
-				printf("RS485: Got data packet\n");
+//				printf("RS485: Got sensor packet\n");
 				if (xQueueSend(data_channel_queue, &packet_ptr, portMAX_DELAY) != pdPASS) {
 					printf("#WARNING: Failed to put RS485 packet on the data_channel_queue\n");
 					rs485_send_packet();					// Transmit any pending Tx packet

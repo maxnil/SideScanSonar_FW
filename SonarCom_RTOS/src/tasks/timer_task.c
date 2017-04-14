@@ -13,6 +13,7 @@
 #include "timers.h"
 
 #include "timer_task.h"
+#include "USB_CDC_tasks.h"
 
 static TimerHandle_t xLEDTimer;
 
@@ -22,7 +23,16 @@ static TimerHandle_t xLEDTimer;
  */
 static void LEDTimerCallback(void *pvParameters) {
 	/* Toggle an LED to show the system is executing. */
-	LED_Toggle(SOFTWARE_TIMER_LED);
+	if (usb_power && usb_connected) {
+		LED_Toggle(USB_CONNECTED_LED);
+		LED_Off(USB_ERROR_LED);
+	} else if (usb_power) {
+		LED_Toggle(USB_CONNECTED_LED);
+		ioport_set_pin_level(USB_ERROR_LED, ioport_get_pin_level(USB_CONNECTED_LED));	// Just to make sure they blink in sync
+	} else {
+		LED_Off(USB_CONNECTED_LED);
+		LED_Toggle(USB_ERROR_LED);
+	}
 }
 
 void create_timer_task(const TickType_t xTimerPeriodInTicks) {

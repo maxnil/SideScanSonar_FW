@@ -21,15 +21,15 @@
 #define START_SYNC_BYTE1 0xAF
 
 /* Packet type */
-#define IDLE_PACKET			(uint8_t)0x00
-#define GPS_PACKET			(uint8_t)0x01
-#define SONAR_PACKET		(uint8_t)0x02
-#define SENSOR_PACKET		(uint8_t)0x03
-#define RESPONSE_PACKET		(uint8_t)0x04
-#define COMMAND_PACKET		(uint8_t)0x05
-#define PONG_PACKET			(uint8_t)0x06
-#define END_RESPONSE_PACKET	(uint8_t)0x07
-#define UNKNOWN_PACKET		(uint8_t)0x08
+#define IDLE_PACKET				(uint8_t)0x00
+#define GPS_PACKET				(uint8_t)0x01
+#define SONAR_PACKET			(uint8_t)0x02
+#define SENSOR_PACKET			(uint8_t)0x03
+#define RESPONSE_PACKET			(uint8_t)0x04
+#define COMMAND_PACKET			(uint8_t)0x05
+#define PONG_PACKET				(uint8_t)0x06
+#define LAST_RESPONSE_PACKET	(uint8_t)0x07
+#define UNKNOWN_PACKET			(uint8_t)0x08
 
 /* Packet Header Size: 'Sync start' + 'Length' + 'Type' */
 #define PACKET_HEADER_SIZE (2 + 2 + 1)

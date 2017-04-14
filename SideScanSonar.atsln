@@ -15,6 +15,7 @@ Global
 		Debug|AVR = Debug|AVR
 		Release|ARM = Release|ARM
 		Release|AVR = Release|AVR
+		Description = Firmware for SideScanSonar modules
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{D7708F67-C567-4F10-8581-F96711BAA1F4}.Debug|ARM.ActiveCfg = Debug|ARM
@@ -23,12 +24,12 @@ Global
 		{D7708F67-C567-4F10-8581-F96711BAA1F4}.Release|ARM.Build.0 = Release|ARM
 		{D7708F67-C567-4F10-8581-F96711BAA1F4}.Release|AVR.ActiveCfg = Release|ARM
 		{DCE6C7E3-EE26-4D79-826B-08594B9AD897}.Debug|ARM.ActiveCfg = Debug|ARM
-		{DCE6C7E3-EE26-4D79-826B-08594B9AD897}.Debug|ARM.Build.0 = Debug|ARM
 		{DCE6C7E3-EE26-4D79-826B-08594B9AD897}.Debug|AVR.ActiveCfg = Debug|ARM
 		{DCE6C7E3-EE26-4D79-826B-08594B9AD897}.Release|ARM.ActiveCfg = Release|ARM
 		{DCE6C7E3-EE26-4D79-826B-08594B9AD897}.Release|ARM.Build.0 = Release|ARM
 		{DCE6C7E3-EE26-4D79-826B-08594B9AD897}.Release|AVR.ActiveCfg = Release|ARM
 		{E03B6EAC-E4B9-4DCB-BC31-F8E96E98C083}.Debug|ARM.ActiveCfg = Debug|AVR
+		{E03B6EAC-E4B9-4DCB-BC31-F8E96E98C083}.Debug|ARM.Build.0 = Debug|AVR
 		{E03B6EAC-E4B9-4DCB-BC31-F8E96E98C083}.Debug|AVR.ActiveCfg = Debug|AVR
 		{E03B6EAC-E4B9-4DCB-BC31-F8E96E98C083}.Debug|AVR.Build.0 = Debug|AVR
 		{E03B6EAC-E4B9-4DCB-BC31-F8E96E98C083}.Release|ARM.ActiveCfg = Release|AVR

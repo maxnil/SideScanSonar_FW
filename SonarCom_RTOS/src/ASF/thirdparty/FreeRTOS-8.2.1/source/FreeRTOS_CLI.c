@@ -72,8 +72,13 @@ static int8_t prvGetNumberOfParameters( const char *pcCommandString );
 of the list of registered commands. */
 static const CLI_Command_Definition_t xHelpCommand =
 {
-	"help",
+/*	"help",
 	"\r\nhelp:\r\n Lists all the registered commands\r\n\r\n",
+	prvHelpCommand,
+	0
+*/
+	"help",
+	"help\r\n",
 	prvHelpCommand,
 	0
 };
@@ -83,7 +88,7 @@ added to this list. */
 static CLI_Definition_List_Item_t xRegisteredCommands =
 {
 	&xHelpCommand,	/* The first command in the list is always the help command, defined in this file. */
-	NULL			/* The next pointer is initialised to NULL, as there are no other registered commands yet. */
+	NULL			/* The next pointer is initialized to NULL, as there are no other registered commands yet. */
 };
 
 /* A buffer into which command outputs can be written is declared here, rather
@@ -187,7 +192,7 @@ size_t xCommandStringLength;
 	{
 		/* The command was found, but the number of parameters with the command
 		was incorrect. */
-		strncpy( pcWriteBuffer, "Incorrect command parameter(s).  Enter \"help\" to view a list of available commands.\r\n\r\n", xWriteBufferLen );
+		strncpy( pcWriteBuffer, "Unknown parameter\r\n", xWriteBufferLen );
 		pxCommand = NULL;
 	}
 	else if( pxCommand != NULL )
@@ -206,7 +211,7 @@ size_t xCommandStringLength;
 	else
 	{
 		/* pxCommand was NULL, the command was not found. */
-		strncpy( pcWriteBuffer, "Command not recognised.  Enter 'help' to view a list of available commands.\r\n\r\n", xWriteBufferLen );
+		strncpy( pcWriteBuffer, "Unknown command\r\n", xWriteBufferLen );
 		xReturn = pdFALSE;
 	}
 

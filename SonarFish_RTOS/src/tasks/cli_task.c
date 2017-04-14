@@ -36,7 +36,7 @@ struct packet_t end_reponse_packet = {
 	.start_sync[0] = START_SYNC_BYTE0,
 	.start_sync[1] = START_SYNC_BYTE1,
 	.length = 6,
-	.type = END_RESPONSE_PACKET,
+	.type = LAST_RESPONSE_PACKET,
 	.data[0] = 0x00		// At least one data bytes needs to be sent
 };
 
@@ -101,7 +101,12 @@ static void cli_task(void *pvParameters) {
 				resp_packet_ptr->start_sync[0] = START_SYNC_BYTE0;
 				resp_packet_ptr->start_sync[1] = START_SYNC_BYTE1;
 				resp_packet_ptr->length = PACKET_HEADER_SIZE + string_len;
-				resp_packet_ptr->type = RESPONSE_PACKET;
+				/* Check if it was the last response for the command */
+				if (returned_value != pdFALSE) {
+					resp_packet_ptr->type = RESPONSE_PACKET;				// More response data available
+				} else {
+					resp_packet_ptr->type = LAST_RESPONSE_PACKET;			// No more response data
+				}
 				memcpy(resp_packet_ptr->data, output_string, string_len);
 
 				/* Transmit the generated string. */
@@ -111,7 +116,7 @@ static void cli_task(void *pvParameters) {
 					break;
 				}				
 			} while (returned_value != pdFALSE);
-
+#if 0
 			/* Allocate end of response packet buffer */
 			resp_packet_ptr = (struct packet_t*)pvPortMalloc(end_reponse_packet.length);
 
@@ -123,7 +128,7 @@ static void cli_task(void *pvParameters) {
 				vPortFree(resp_packet_ptr);
 				break;
 			}
-			
+#endif			
 			/* Release the command string buffer */
 			vPortFree(cmd_packet_ptr);
 		}

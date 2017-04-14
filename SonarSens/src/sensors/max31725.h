@@ -22,12 +22,16 @@ typedef struct max31725_conf_t {
 	int16_t		tos;
 } max31725_conf_t;
 
+typedef struct max31725_data_t {
+	int16_t		temp;
+} max31725_data_t;
+
 
 /* Initialize MAX31725 temperature sensor */
 int8_t max31725_init(void);
 
 
 /* Get temperature from MAX31725 */
-int8_t max31725_get_temp(uint16_t *temp);
+bool max31725_get_data(max31725_data_t *temp_data);
 
 #endif /* MAX31725_H_ */

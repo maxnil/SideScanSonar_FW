@@ -9,7 +9,7 @@
 #ifndef CONF_SONARSENS_H_
 #define CONF_SONARSENS_H_
 
-#define SW_VERSION "v0.1.0"
+#define SW_VERSION "v0.2.1"
 
 /* Enabled peripheral functions */
 #define CONF_SSENS_ENABLE_UART

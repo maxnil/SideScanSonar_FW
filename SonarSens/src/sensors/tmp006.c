@@ -25,15 +25,6 @@
 #define MAN_ID	0xFE
 #define DEV_ID	0xFF
 
-/* TMP006 constants */
-#define S0		6e-14
-#define A1		1.75e-3
-#define A2		-1.678e-5
-#define TREF	298.15
-#define B0		-2.94e-5
-#define B1		-5.7e-7
-#define B2		4.63e-9
-#define C2		13.4
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ LOCAL VARIABLES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -80,41 +71,24 @@ int8_t tmp006_init(void) {
 /*******************************************************************************
  * Get data from TMP006
  */
-int8_t tmp006_get_data(tmp006_data_t *data) {
+bool tmp006_get_data(tmp006_data_t *data) {
 	uint16_t err;
 	uint8_t buf[2];
 	
-	/* Get current data values */
+	/* Get current vObj value */
 	err = twi_read(SLA, V_OBJ, 2, buf);
-	if (err)
-		return -1;
+	if (err > 0)
+		return false;
 
 	data->v_obj = (buf[0]<<8) | buf[1];
 		
+	/* Get current tAmb value */
 	err = twi_read(SLA, T_AMB, 2, buf);
-	if (err)
-		return -1;
-
+	if (err) {
+		return false;
+	}
+	
 	data->t_amb = (buf[0]<<8) | buf[1];
-	
-	return 0;
+	return true;
 }
 
-
-/*******************************************************************************
- * Calculate temperature
- */
-double tmp006_temp_calc(double Vobj, double Tdie) {
-	double S, Vos, FVobj;
-	double Tobj;
-	
-	S = S0 * (1.0 + A1 * (Tdie - TREF) + A2 * (Tdie - TREF) * (Tdie - TREF));
-	
-	Vos = B0 + B1 * (Tdie - TREF) + B2 * (Tdie - TREF) * (Tdie - TREF);
-
-	FVobj = (Vobj - Vos) + C2 * (Vobj - Vos) * (Vobj - Vos);
-	
-	Tobj = pow((Tdie * Tdie * Tdie * Tdie) + (FVobj / S), 0.25);
-	
-	return Tobj - 273.15;
-}

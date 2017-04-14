@@ -54,18 +54,18 @@ static portBASE_TYPE task_stats_cmd    (char *pcWriteBuffer, size_t xWriteBuffer
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ LOCAL VARIABLES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /* CLI command definitions */
-CLI_DEF_T get_date_cmd_def      = {"get_date",      "get_date\r\n",                    get_date_cmd,      0};
-CLI_DEF_T get_sonar_pwr_cmd_def = {"get_sonar_pwr", "get_sonar_pwr\r\n",               get_sonar_pwr_cmd, 0};
-CLI_DEF_T get_time_cmd_def      = {"get_time",      "get_time\r\n",                    get_time_cmd,      0};
-CLI_DEF_T get_version_cmd_def   = {"get_version",   "get_version\r\n",                 get_version_cmd,   0};
-CLI_DEF_T mem_cmd_def           = {"mem",           "mem\r\n",                         mem_cmd,           0};
-CLI_DEF_T ping_cmd_def          = {"ping",          "ping\r\n",                        ping_cmd,          0};
-CLI_DEF_T ps_cmd_def            = {"ps",            "ps\r\n",                          ps_cmd,            0};
-CLI_DEF_T set_date_cmd_def      = {"set_date",      "set_date year-month-day\r\n",     set_date_cmd,      1};
-CLI_DEF_T set_sonar_pwr_cmd_def = {"set_sonar_pwr", "set_sonar_pwr 0|1\r\n",           set_sonar_pwr_cmd, 1};
-CLI_DEF_T set_time_cmd_def      = {"set_time",      "set_time hour:minute:second\r\n", set_time_cmd,      1};
-CLI_DEF_T sonar_cmd_def         = {"sonar",         "sonar \'cmd arg\'\r\n",           sonar_cmd,        -1};
-CLI_DEF_T task_stats_cmd_def    = {"task-stats",    "task-stats\r\n",                  task_stats_cmd,    0};
+CLI_DEF_T get_date_cmd_def      = {"get_date",      "get_date\n",                    get_date_cmd,      0};
+CLI_DEF_T get_sonar_pwr_cmd_def = {"get_sonar_pwr", "get_sonar_pwr\n",               get_sonar_pwr_cmd, 0};
+CLI_DEF_T get_time_cmd_def      = {"get_time",      "get_time\n",                    get_time_cmd,      0};
+CLI_DEF_T get_version_cmd_def   = {"get_version",   "get_version\n",                 get_version_cmd,   0};
+CLI_DEF_T mem_cmd_def           = {"mem",           "mem\n",                         mem_cmd,           0};
+CLI_DEF_T ping_cmd_def          = {"ping",          "ping\n",                        ping_cmd,          0};
+CLI_DEF_T ps_cmd_def            = {"ps",            "ps\n",                          ps_cmd,            0};
+CLI_DEF_T set_date_cmd_def      = {"set_date",      "set_date year-month-day\n",     set_date_cmd,      1};
+CLI_DEF_T set_sonar_pwr_cmd_def = {"set_sonar_pwr", "set_sonar_pwr 0|1\n",           set_sonar_pwr_cmd, 1};
+CLI_DEF_T set_time_cmd_def      = {"set_time",      "set_time hour:minute:second\n", set_time_cmd,      1};
+CLI_DEF_T sonar_cmd_def         = {"sonar",         "sonar \'cmd arg\'\n",           sonar_cmd,        -1};
+CLI_DEF_T task_stats_cmd_def    = {"task-stats",    "task-stats\n",                  task_stats_cmd,    0};
 
 /* Pong packet (can't be declared as const since the PDC can't read from program flash */
 struct packet_t pong_packet = {
@@ -110,7 +110,7 @@ static portBASE_TYPE get_date_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, c
 	rtcc_get_date(&year, &month, &day);
 
 	/* Return date */	
-	sprintf(pcWriteBuffer, "%d-%.2d-%.2d\r\n", (int)year, (int)month, (int)day);
+	sprintf(pcWriteBuffer, "%d-%.2d-%.2d\n", (int)year, (int)month, (int)day);
 
 	return pdFALSE;
 }
@@ -123,7 +123,7 @@ static portBASE_TYPE get_sonar_pwr_cmd(char *pcWriteBuffer, size_t xWriteBufferL
 	configASSERT(pcWriteBuffer);
 	
 	/* Return current Sonar Power status */
-	sprintf(pcWriteBuffer, "%d\r\n", sonar_power_status() ? 1 : 0);
+	sprintf(pcWriteBuffer, "%d\n", sonar_power_status() ? 1 : 0);
 			
 	return pdFALSE;
 }
@@ -142,7 +142,7 @@ static portBASE_TYPE get_time_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, c
 	rtcc_get_time(&hour, &minute, &second);
 
 	/* Return RTC time */
-	sprintf(pcWriteBuffer, "%d:%.2d:%.2d\r\n", (int)hour, (int)minute, (int)second);
+	sprintf(pcWriteBuffer, "%d:%.2d:%.2d\n", (int)hour, (int)minute, (int)second);
 
 	return pdFALSE;
 }
@@ -169,7 +169,7 @@ static portBASE_TYPE mem_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const 
 	configASSERT(pcWriteBuffer);
 
 	/* Return current Heap memory status */
-	sprintf(pcWriteBuffer, "Free heep size: %d bytes\r\n", xPortGetFreeHeapSize());
+	sprintf(pcWriteBuffer, "Free heep size: %d bytes\n", xPortGetFreeHeapSize());
 
 	return pdFALSE;
 }
@@ -185,7 +185,7 @@ static portBASE_TYPE ping_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const
 	configASSERT(pcWriteBuffer);
 
 	/* Send "ping" back on CLI USB CDC interface */
-	sprintf(pcWriteBuffer, "pong1\n");
+	sprintf(pcWriteBuffer, "scom_pong\n");
 	
 	/* Allocate Pong packet buffer */
 	packet_ptr = (struct packet_t*)pvPortMalloc(16);
@@ -208,7 +208,7 @@ static portBASE_TYPE ping_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const
  * Returns task run-time status
  */
 static portBASE_TYPE ps_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
-	const int8_t *const stats_table_header = (int8_t *) "Task        Abs Time     % Time\r\n*********************************\r\n";
+	const int8_t *const stats_table_header = (int8_t *) "Task        Abs Time     % Time\n*********************************\n";
 
 	configASSERT(pcWriteBuffer);
 
@@ -237,7 +237,7 @@ static portBASE_TYPE set_date_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, c
 	
 	/* Check that parameter length is correct */
 	if (parameter_string_length != 8) {
-		sprintf(pcWriteBuffer, "ARG ERROR\r\n");
+		sprintf(pcWriteBuffer, "ARG ERROR\n");
 		return pdFALSE;
 	}
 	
@@ -248,7 +248,7 @@ static portBASE_TYPE set_date_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, c
 	status = rtcc_set_date(year, month, day);
 
 	/* Return RTC status */
-	sprintf(pcWriteBuffer, "%d\r\n", (status == 0) ? 1 : 0);
+	sprintf(pcWriteBuffer, "%d\n", (status == 0) ? 1 : 0);
 
 	return pdFALSE;
 }
@@ -274,7 +274,7 @@ static portBASE_TYPE set_sonar_pwr_cmd(char *pcWriteBuffer, size_t xWriteBufferL
 	}
 
 	/* Return current Sonar Power status */
-	sprintf(pcWriteBuffer, "%d\r\n", sonar_power_status() ? 1 : 0);
+	sprintf(pcWriteBuffer, "%d\n", sonar_power_status() ? 1 : 0);
 			
 	return pdFALSE;
 }
@@ -297,7 +297,7 @@ static portBASE_TYPE set_time_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, c
 	
 	/* Check that parameter length is correct */
 	if (parameter_string_length != 8) {
-		sprintf(pcWriteBuffer, "ARG ERROR\r\n");
+		sprintf(pcWriteBuffer, "ARG ERROR\n");
 		return pdFALSE;
 	}
 
@@ -308,7 +308,7 @@ static portBASE_TYPE set_time_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, c
 	status = rtcc_set_time(hour, minute, second);
 	
 	/* Return RTC status */
-	sprintf(pcWriteBuffer, "%d\r\n", (status == 0) ? 1 : 0);
+	sprintf(pcWriteBuffer, "%d\n", (status == 0) ? 1 : 0);
 
 	return pdFALSE;
 }
@@ -350,7 +350,7 @@ static portBASE_TYPE sonar_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, cons
 		/* Copy parameter string to data packet */
 		memcpy(&packet_ptr->data, parameter_string, parameter_len);
 
-	//	printf("Sending \"%s\" to SonarFish (len = %d)\n", parameter_string, parameter_len);
+		printf("Sending \"%s\" to SonarFish (len = %d)\n", parameter_string, parameter_len);
 
 		/* Put Sonar Command packet on command queue */
 		if (xQueueSend(command_queue, &packet_ptr, portMAX_DELAY)) {
@@ -370,7 +370,7 @@ static portBASE_TYPE sonar_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, cons
 			/* Get packet payload */
 			sprintf(pcWriteBuffer, (char*)packet_ptr->data);
 			vPortFree(packet_ptr);
-			if (packet_ptr->type == END_RESPONSE_PACKET) {
+			if (packet_ptr->type == LAST_RESPONSE_PACKET) {
 				get_response = 0;
 				return pdFALSE;
 			} else {
@@ -378,7 +378,9 @@ static portBASE_TYPE sonar_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, cons
 				return pdPASS;
 			}
 		} else {
+			get_response = 0;
 			printf("### Sonar command timeout\n");
+			sprintf(pcWriteBuffer, "-\n");
 		}
 	}
 	
@@ -390,7 +392,7 @@ static portBASE_TYPE sonar_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, cons
  * "Task Status" command
  */
 static portBASE_TYPE task_stats_cmd(char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString) {
-	const int8_t *const task_table_header = (int8_t *) "Task  State Pri Stack #\r\n*************************************\r\n";
+	const int8_t *const task_table_header = (int8_t *) "Task  State Pri Stack #\n*************************************\n";
 
 	configASSERT(pcWriteBuffer);
 

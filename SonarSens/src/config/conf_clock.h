@@ -76,7 +76,8 @@
  * correctly with an incorrect value.
  */
 
-//#define BOARD_EXTERNAL_CLK 12000000UL
-#define F_CPU 12000000UL
+#define BOARD_EXTERNAL_CLK 12000000UL
+
+#define F_CPU BOARD_EXTERNAL_CLK
 
 #endif /* CONF_CLOCK_H_INCLUDED */

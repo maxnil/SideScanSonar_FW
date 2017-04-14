@@ -28,7 +28,7 @@
 #define RESPONSE_PACKET		(uint8_t)0x04
 #define COMMAND_PACKET		(uint8_t)0x05
 #define PONG_PACKET			(uint8_t)0x06
-#define END_RESPONSE_PACKET (uint8_t)0x07
+#define LAST_RESPONSE_PACKET (uint8_t)0x07
 #define UNKNOWN_PACKET		(uint8_t)0x08
 
 /* Packet Header Size: 'Sync start' + 'Length' + 'Type' */

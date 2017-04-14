@@ -9,7 +9,8 @@
 #ifndef TIMER_TASK_H_
 #define TIMER_TASK_H_
 
-#define SOFTWARE_TIMER_LED LED0_GPIO
+#define USB_CONNECTED_LED    LED0_GPIO
+#define USB_ERROR_LED LED1_GPIO
 
 void create_timer_task(const TickType_t xTimerPeriodInTicks);
 

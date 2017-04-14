@@ -53,16 +53,16 @@ int8_t max31725_init(void) {
 /*******************************************************************************
  * Get temperature from MAX31725
  */
-int8_t max31725_get_temp(uint16_t *temp) {
+bool max31725_get_data(max31725_data_t *temp_data) {
 	int8_t err;
 	uint8_t buf[2];
 	
 	/* Get current data values */
 	err = twi_read(SLA, TEMP, 2, buf);
-	if (err) {
-		*temp = -1;
-	} else {
-		*temp = (buf[0]<<8) | buf[1];
+	if (err > 0) {
+		return false;
 	}
-	return err;
+	
+	temp_data->temp = (buf[0]<<8) | buf[1];
+	return true;
 }

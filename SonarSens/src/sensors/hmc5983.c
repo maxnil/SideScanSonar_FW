@@ -69,14 +69,14 @@ void hmc5983_init(port_pin_t ss_pin)
 	// Activate HMC5983 slave select
 	spi_select_device(hmc5983_config.ss_pin);
 		
-	spi_transmit(WRITE_INC | CRA);				// Send SPI command
-	spi_receive();								// Receive dummy byte
-	spi_transmit(1<<CRA_TS | 3<<CRA_MA);		// Write CRA (Temperature enable, measure average = 8)
-	spi_receive();								// Receive dummy byte
-	spi_transmit(0<<CRB_GN);					// Write CRB (Gain = 0)
-	spi_receive();								// Receive dummy byte
-	spi_transmit(1<<MR_MD);						// Write MR (Single-Measurement Mode)
-	spi_receive();								// Receive dummy byte
+	spi_transmit(WRITE_INC | CRA);					// Send SPI command
+	spi_receive();									// Receive dummy byte
+	spi_transmit(1<<CRA_TS | 4<<CRA_DO | 3<<CRA_MA);// Write CRA (Temperature enable, 15 Hz, measure average = 8)
+	spi_receive();									// Receive dummy byte
+	spi_transmit(1<<CRB_GN);						// Write CRB (Gain = 1, 0.92 mG/Lsb)
+	spi_receive();									// Receive dummy byte
+	spi_transmit(0<<MR_SIM | 1<<MR_MD);				// Write MR (4-wire, Single-Measurement Mode)
+	spi_receive();									// Receive dummy byte
 		
 	// Deactivate HMC5983 slave select
 	spi_deselect_device(hmc5983_config.ss_pin);
@@ -107,7 +107,7 @@ double hmc5983_get_temp(void)
 }
 
 // Get magnetic values
-int8_t hmc5983_get_data(hmc5983_data_t *data)
+int8_t hmc5983_get_data(magn_data_t *data)
 {
 	uint8_t tmp_l, tmp_h;
 	
@@ -131,23 +131,25 @@ int8_t hmc5983_get_data(hmc5983_data_t *data)
 	spi_transmit(READ_INC | DXRA);
 	spi_receive();								// Receive dummy byte
 
-	spi_transmit(0x00);							// Transmit 8 cycles
-	tmp_h = spi_receive();						// Receive first data byte
-	spi_transmit(0x00);							// Transmit 8 cycles
-	tmp_l = spi_receive();						// Receive second data byte
-	data->x = (tmp_h << 8) | tmp_l;	
+	spi_transmit(0x00);							// Transmit dummy byte
+	tmp_h = spi_receive();						// Receive DXRA data byte
+	spi_transmit(0x00);							// Transmit dummy byte
+	tmp_l = spi_receive();						// Receive DXRB data byte
+//	data->x = (tmp_h << 8) | tmp_l;	
+	data->y = -((tmp_h << 8) | tmp_l);			// Remapping x<->y to fit with board orientation
 
-	spi_transmit(0x00);							// Transmit 8 cycles
-	tmp_h = spi_receive();						// Receive third data byte
-	spi_transmit(0x00);							// Transmit 8 cycles
-	tmp_l = spi_receive();						// Receive forth data byte
+	spi_transmit(0x00);							// Transmit dummy byte
+	tmp_h = spi_receive();						// Receive DZRA data byte
+	spi_transmit(0x00);							// Transmit dummy byte
+	tmp_l = spi_receive();						// Receive DZRB data byte
 	data->z = (tmp_h << 8) | tmp_l;
 
-	spi_transmit(0x00);							// Transmit 8 cycles
-	tmp_h = spi_receive();						// Receive fifth data byte
-	spi_transmit(0x00);							// Transmit 8 cycles
-	tmp_l = spi_receive();						// Receive sixth data byte
-	data->y = (tmp_h << 8) | tmp_l;
+	spi_transmit(0x00);							// Transmit dummy byte
+	tmp_h = spi_receive();						// Receive DYRA data byte
+	spi_transmit(0x00);							// Transmit dummy byte
+	tmp_l = spi_receive();						// Receive DYRB data byte
+//	data->y = (tmp_h << 8) | tmp_l;
+	data->x = -((tmp_h << 8) | tmp_l);			// Remapping x<->y to fit with board orientation
 	
 	// Deactivate HMC5983 slave select
 	spi_deselect_device(hmc5983_config.ss_pin);

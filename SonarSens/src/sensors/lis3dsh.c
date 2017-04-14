@@ -131,7 +131,7 @@ void lis3dsh_init(port_pin_t ss_pin)
 	
 	spi_transmit(WRITE | CTRL_REG6);			// Send SPI command
 	spi_receive();								// Receive dummy byte
-	spi_transmit(0x10);							// Write CTRL_REG6 (ADD_INC)
+	spi_transmit(0x10);							// Write ADD_INC in CTRL_REG6
 	spi_receive();								// Receive dummy byte
 	
 	// Deactivate LIS3DSH slave select
@@ -142,19 +142,20 @@ void lis3dsh_init(port_pin_t ss_pin)
 	// Activate LIS3DSH slave select
 	spi_select_device(lis3dsh_config.ss_pin);
 	
-	spi_transmit(WRITE | CTRL_REG4);			// Send SPI command
+	spi_transmit(WRITE | CTRL_REG4);			// Address CTRL_REG4
 	spi_receive();								// Receive dummy byte
-	spi_transmit(0x7F);							// Write CTRL_REG4 (400Hz, BDU, Zen, Yen, Xen)
+	spi_transmit(0x3<<4 | 1<<3 | 0x7);			// Write 12.5 Hz, BDU, Zen, Yen, Xen in CTRL_REG4
 	spi_receive();								// Receive dummy byte
-	spi_transmit(0x00);							// Write CTRL_REG1 ()
+
+	spi_transmit(0x00);							// Write 0x00 to CTRL_REG1
 	spi_receive();								// Receive dummy byte
-	spi_transmit(0x00);							// Write CTRL_REG2 ()
+	spi_transmit(0x00);							// Write 0x00 to CTRL_REG2
 	spi_receive();								// Receive dummy byte
-	spi_transmit(0xC8);							// Write CTRL_REG3 (DR_EN, IEA, INT1_EN)
+	spi_transmit(1<<2);							// Write VFILT in CTRL_REG3
 	spi_receive();								// Receive dummy byte
-	spi_transmit(0x00);							// Write CTRL_REG5 ()
+	spi_transmit((0x3<<6) | (0<<3));			// Write BW=50 Hz, FSCALE=2g in CTRL_REG5
 	spi_receive();								// Receive dummy byte
-	spi_transmit(0x10);							// Write CTRL_REG6 (ADD_INC)
+	spi_transmit(0x10);							// Write ADD_INC in CTRL_REG6
 	spi_receive();								// Receive dummy byte
 	
 	// Deactivate LIS3DSH slave select
@@ -182,7 +183,7 @@ int8_t lis3dsh_get_temp(void)
 }
 
 // Get Accelerometer values
-int lis3dsh_get_data(acc_t *data)
+int lis3dsh_get_data(acc_data_t *data)
 {
 	uint8_t tmp_l, tmp_h;
 	
@@ -192,26 +193,33 @@ int lis3dsh_get_data(acc_t *data)
 	// Activate LIS3DSH slave select
 	spi_select_device(lis3dsh_config.ss_pin);
 	
-	spi_transmit(READ | OUT_X_L);
+	do {
+		spi_transmit(READ | STATUS);			// Address STATUS register
+		tmp_l = spi_receive();					// Receive status byte
+	} while (!(tmp_l & (1<<3)));				// Wait for bit 3 (ZYXDA) to become 1
+
+	spi_transmit(READ | OUT_X_L);				// Address OUT_X_L register
 	spi_receive();								// Receive dummy byte
 
-	spi_transmit(0x00);							// Transmit 8 cycles
-	tmp_l = spi_receive();						// Receive first data byte
-	spi_transmit(0x00);							// Transmit 8 cycles
-	tmp_h = spi_receive();						// Receive second data byte
-	data->x = (tmp_h << 8) | tmp_l;
+	spi_transmit(0x00);							// Transmit dummy byte
+	tmp_l = spi_receive();						// Receive OUT_X_L data byte
+	spi_transmit(0x00);							// Transmit dummy byte
+	tmp_h = spi_receive();						// Receive OUT_X_H data byte
+//	data->x = (tmp_h << 8) | tmp_l;
+	data->y = (tmp_h << 8) | tmp_l;				// Remapping x<->y to fit with board orientation
 
-	spi_transmit(0x00);							// Transmit 8 cycles
-	tmp_l = spi_receive();						// Receive third data byte
-	spi_transmit(0x00);							// Transmit 8 cycles
-	tmp_h = spi_receive();						// Receive forth data byte
+	spi_transmit(0x00);							// Transmit dummy byte
+	tmp_l = spi_receive();						// Receive OUT_Y_L data byte
+	spi_transmit(0x00);							// Transmit dummy byte
+	tmp_h = spi_receive();						// Receive OUT_Y_H data byte
+//	data->y = (tmp_h << 8) | tmp_l;
+	data->x = (tmp_h << 8) | tmp_l;				// Remapping x<->y to fit with board orientation
+
+	spi_transmit(0x00);							// Transmit dummy byte
+	tmp_l = spi_receive();						// Receive OUT_Z_L data byte
+	spi_transmit(0x00);							// Transmit dummy byte
+	tmp_h = spi_receive();						// Receive OUT_Z_H data byte
 	data->z = (tmp_h << 8) | tmp_l;
-
-	spi_transmit(0x00);							// Transmit 8 cycles
-	tmp_l = spi_receive();						// Receive fifth data byte
-	spi_transmit(0x00);							// Transmit 8 cycles
-	tmp_h = spi_receive();						// Receive sixth data byte
-	data->y = (tmp_h << 8) | tmp_l;
 
 	// Deactivate LIS3DSH slave select
 	spi_deselect_device(lis3dsh_config.ss_pin);

@@ -17,7 +17,7 @@ typedef uint8_t tc_timeout_id_t;
 
 void timer_init(void);
 
-/* Start singleshot timeout */
+/* Start single shot timeout */
 void tc_timeout_start_singleshot(tc_timeout_id_t id, uint16_t timeout);
 
 /* Start periodic timeout */

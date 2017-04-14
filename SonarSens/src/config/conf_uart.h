@@ -43,13 +43,15 @@
 #ifndef CONF_UART_H_INCLUDED
 #define CONF_UART_H_INCLUDED
 
+#include "conf_sonarsens.h"
+
 /**
  * \brief Set the desired baud rate value
  *
  * set the desired baudrate, the define is used by the util/setbaud.h to calculate the
  * register values.
  */
-#define BAUD 115200
+#define BAUD CONF_SSENS_SENSOR_UART_BAUDRATE
 
 //! set the baud rate tolerance to 2%
 #define BAUD_TOL 2

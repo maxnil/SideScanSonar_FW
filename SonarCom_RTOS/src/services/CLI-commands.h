@@ -9,7 +9,7 @@
 #ifndef CLI_COMMANDS_H_
 #define CLI_COMMANDS_H_
 
-#define RESPONSE_TIMEOUT_MS 5000
+#define RESPONSE_TIMEOUT_MS 1000
 
 void vRegisterCLICommands(void);
 
